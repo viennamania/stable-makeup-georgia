@@ -11,6 +11,7 @@ import {
   getRequestIp,
 } from "@/lib/server/user-read-security";
 import { insertPublicOrderApiCallLog } from "@/lib/api/publicOrderApiCallLog";
+import { validateBuyOrderStoreAvailability } from "@/lib/server/buy-order-store-validation";
 
 const ROUTE = "/api/order/setBuyOrder";
 
@@ -83,8 +84,26 @@ export async function POST(request: NextRequest) {
 
   console.log("setBuyOrder =====  body", body);
 
+  const storeValidation = await validateBuyOrderStoreAvailability(storecode);
+  if (!storeValidation.ok) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload: body,
+      status: "error",
+      reason: storeValidation.reason,
+      resultMeta: {
+        storecode: storeValidation.storecode,
+      },
+    });
+    return NextResponse.json({
+      result: null,
+      error: storeValidation.error,
+    }, { status: storeValidation.status });
+  }
+  const resolvedStorecode = storeValidation.storecode;
+
   const existingBuyOrder = await getBlockingBuyOrderByStorecodeAndWalletAddress({
-    storecode,
+    storecode: resolvedStorecode,
     walletAddress,
   });
 
@@ -98,7 +117,7 @@ export async function POST(request: NextRequest) {
         existingOrderId: existingBuyOrder?._id?.toString?.() || existingBuyOrder?._id || null,
         existingTradeId: existingBuyOrder?.tradeId || null,
         walletAddress: existingBuyOrder?.walletAddress || walletAddress || null,
-        storecode: existingBuyOrder?.storecode || storecode || null,
+        storecode: existingBuyOrder?.storecode || resolvedStorecode || null,
       },
     });
     return NextResponse.json({
@@ -111,7 +130,7 @@ export async function POST(request: NextRequest) {
   let escrowWallet;
   try {
     escrowWallet = await createBuyOrderEscrowWallet({
-      storecode,
+      storecode: resolvedStorecode,
     });
   } catch (error) {
     await writePublicOrderApiCallLog({
@@ -121,7 +140,7 @@ export async function POST(request: NextRequest) {
       reason: error instanceof Error ? error.message : "failed_to_create_buy_order_escrow_wallet",
       resultMeta: {
         walletAddress: walletAddress || null,
-        storecode: storecode || null,
+        storecode: resolvedStorecode || null,
       },
     });
     return NextResponse.json({
@@ -137,7 +156,7 @@ export async function POST(request: NextRequest) {
     chain: chain,
     
     //agentcode: agentcode,
-    storecode: storecode,
+    storecode: resolvedStorecode,
     
     walletAddress: walletAddress,
 
@@ -175,7 +194,7 @@ export async function POST(request: NextRequest) {
       reason: "failed_to_insert_buy_order",
       resultMeta: {
         walletAddress: walletAddress || null,
-        storecode: storecode || null,
+        storecode: resolvedStorecode || null,
         nickname: nickname || null,
       },
     });
@@ -197,7 +216,7 @@ export async function POST(request: NextRequest) {
       orderId: result?._id?.toString?.() || result?._id || null,
       tradeId: result?.tradeId || null,
       walletAddress: result?.walletAddress || walletAddress || null,
-      storecode: storecode || null,
+      storecode: resolvedStorecode || null,
       nickname: nickname || null,
     },
   });

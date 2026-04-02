@@ -26,6 +26,7 @@ import {
 import {
   getUserWalletAddressByStorecodeAndNickname,
 } from '@lib/api/user';
+import { validateBuyOrderStoreAvailability } from "@/lib/server/buy-order-store-validation";
 
 
 
@@ -138,6 +139,24 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   const nickname = userid;
   const krwAmount = Number(amount);
 
+  const storeValidation = await validateBuyOrderStoreAvailability(storecode);
+  if (!storeValidation.ok) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: storeValidation.reason,
+      resultMeta: {
+        storecode: storeValidation.storecode,
+      },
+    });
+    return NextResponse.json({
+      result: null,
+      error: storeValidation.error,
+    }, { status: storeValidation.status });
+  }
+  const resolvedStorecode = storeValidation.storecode;
+
 
   // 
   //storecode
@@ -154,7 +173,7 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
 
 
   // walletAddress from storecode, nickname
-  const userInfo = await getUserWalletAddressByStorecodeAndNickname(storecode, nickname);
+  const userInfo = await getUserWalletAddressByStorecodeAndNickname(resolvedStorecode, nickname);
 
   if (!userInfo) {
     await writePublicOrderApiCallLog({
@@ -193,7 +212,7 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   }
 
   const existingBuyOrder = await getBlockingBuyOrderByStorecodeAndWalletAddress({
-    storecode,
+    storecode: resolvedStorecode,
     walletAddress,
   });
 
@@ -240,7 +259,7 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   let escrowWallet;
   try {
     escrowWallet = await createBuyOrderEscrowWallet({
-      storecode,
+      storecode: resolvedStorecode,
     });
   } catch (error) {
     await writePublicOrderApiCallLog({
@@ -263,7 +282,7 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   const result = await insertBuyOrder({
     chain: chain,
     
-    storecode: storecode,
+    storecode: resolvedStorecode,
     
     walletAddress: walletAddress,
 
@@ -317,7 +336,7 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
       orderId: result?._id?.toString?.() || result?._id || null,
       tradeId: result?.tradeId || null,
       walletAddress: result?.walletAddress || walletAddress || null,
-      storecode,
+      storecode: resolvedStorecode,
       nickname,
       clientId: String(clientid || "").trim() || null,
     },
