@@ -142,6 +142,12 @@ const isSmartAccountSellerWallet = (
   return !walletAddress || signerAddress !== walletAddress;
 };
 
+const normalizeWalletAddress = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim().toLowerCase();
+};
 
 interface BuyOrder {
   _id: string;
@@ -726,6 +732,7 @@ export default function Index({ params }: any) {
   const activeAccount = useActiveAccount();
 
   const address = activeAccount?.address;
+  const normalizedAddress = normalizeWalletAddress(address);
   const normalizedCenterStorecode = String(params.center || "").trim();
 
 
@@ -3662,12 +3669,12 @@ useEffect(() => {
           if (data.result) {
   
             setStore(data.result);
-  
-            setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-            if (data.result?.adminWalletAddress === address) {
-              setIsAdmin(true);
-            }
+            const normalizedStoreAdminWalletAddress = normalizeWalletAddress(data.result?.adminWalletAddress);
+            setStoreAdminWalletAddress(normalizedStoreAdminWalletAddress);
+            setIsAdmin(Boolean(
+              normalizedStoreAdminWalletAddress
+              && normalizedStoreAdminWalletAddress === normalizedAddress,
+            ));
   
 
         } else {
@@ -3685,6 +3692,7 @@ useEffect(() => {
           setStoreList(data.result.stores);
           setStore(null);
           setStoreAdminWalletAddress("");
+          setIsAdmin(false);
         }
   
           setFetchingStore(false);
@@ -3703,7 +3711,7 @@ useEffect(() => {
       , 15000);
       return () => clearInterval(interval);
   
-    } , [params.center, address]);
+    } , [params.center, address, normalizedAddress]);
 
 
 
@@ -3995,11 +4003,21 @@ useEffect(() => {
 
 
 
+  const normalizedStoreAdminWalletAddress = normalizeWalletAddress(
+    store?.adminWalletAddress || storeAdminWalletAddress,
+  );
+  const hasStoreAdminAccess = Boolean(
+    normalizedAddress
+    && normalizedStoreAdminWalletAddress
+    && normalizedAddress === normalizedStoreAdminWalletAddress,
+  );
+  const hasGlobalAdminRole = user?.role === "admin";
+
   if (
     (address
     && store
-    &&  address !== store.adminWalletAddress
-    && user?.role !== "admin"
+    && !hasStoreAdminAccess
+    && !hasGlobalAdminRole
   )
     
 
@@ -5895,11 +5913,11 @@ useEffect(() => {
                       </div>
                     </th>
                     
-                    <th className="p-2 w-[10rem] align-top text-right">
+                    <th className="p-2 w-[12rem] align-top text-right">
                       <div className="flex flex-col items-end justify-center gap-2">
-                        <span>구매량(USDT)</span>
-                        <span>구매금액(원)</span>
-                        <span>개당금액(원)</span>
+                        <span className="whitespace-nowrap">구매량(USDT)</span>
+                        <span className="whitespace-nowrap">구매금액(원)</span>
+                        <span className="whitespace-nowrap">개당금액(원)</span>
                       </div>
                     </th>
 
@@ -6340,7 +6358,7 @@ useEffect(() => {
 
                       <td className="p-2 align-top">
                         <div className="
-                          w-full max-w-[10rem]
+                          w-full max-w-[12rem]
                           flex flex-col gap-2 items-end justify-start">
 
                           <div className="flex flex-row items-center justify-end gap-2">

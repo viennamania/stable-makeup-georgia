@@ -96,6 +96,13 @@ import {
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
+const normalizeWalletAddress = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim().toLowerCase();
+};
+
 
 
 interface BuyOrder {
@@ -495,6 +502,7 @@ export default function Index({ params }: any) {
   const activeAccount = useActiveAccount();
 
   const address = activeAccount?.address;
+  const normalizedAddress = normalizeWalletAddress(address);
 
 
 
@@ -1690,12 +1698,12 @@ export default function Index({ params }: any) {
         if (data.result) {
 
           setStore(data.result);
-
-          setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-          if (data.result?.adminWalletAddress === address) {
-            setIsAdmin(true);
-          }
+          const normalizedStoreAdminWalletAddress = normalizeWalletAddress(data.result?.adminWalletAddress);
+          setStoreAdminWalletAddress(normalizedStoreAdminWalletAddress);
+          setIsAdmin(Boolean(
+            normalizedStoreAdminWalletAddress
+            && normalizedStoreAdminWalletAddress === normalizedAddress,
+          ));
 
           setSellerWalletAddress(data.result?.sellerWalletAddress || "");
 
@@ -1714,6 +1722,7 @@ export default function Index({ params }: any) {
           setStoreList(data.result.stores || []);
           setStore(null);
           setStoreAdminWalletAddress("");
+          setIsAdmin(false);
         }
 
         setFetchingStore(false);
@@ -1725,7 +1734,7 @@ export default function Index({ params }: any) {
 
     fetchData();
 
-  } , [params.center, address]);
+  } , [params.center, address, normalizedAddress]);
 
 
 
@@ -2375,11 +2384,21 @@ const [tradeSummary, setTradeSummary] = useState({
     );
   }
 
+  const normalizedStoreAdminWalletAddress = normalizeWalletAddress(
+    store?.adminWalletAddress || storeAdminWalletAddress,
+  );
+  const hasStoreAdminAccess = Boolean(
+    normalizedAddress
+    && normalizedStoreAdminWalletAddress
+    && normalizedAddress === normalizedStoreAdminWalletAddress,
+  );
+  const hasGlobalAdminRole = user?.role === "admin";
+
   if (
     (address
     && store
-    &&  address !== store.adminWalletAddress
-    && user?.role !== "admin")
+    && !hasStoreAdminAccess
+    && !hasGlobalAdminRole)
     
 
   ) {
@@ -4118,7 +4137,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                             {
                             (item.status === 'accepted' || item.status === 'paymentRequested')
-                            && store.adminWalletAddress === address && (
+                            && hasStoreAdminAccess && (
                               
                               <div className="flex flex-row items-center gap-2">
                                 {/*}
@@ -5750,4 +5769,3 @@ const TradeDetail = (
       </div>
     );
   };
-
