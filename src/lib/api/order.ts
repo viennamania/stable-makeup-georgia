@@ -5268,12 +5268,30 @@ export async function acceptBuyOrder(data: any) {
 
   //if (order?.privateSale === false) {
     
+    const sellerWalletAddressRaw = String(data.sellerWalletAddress || '').trim();
+    const normalizedSellerWalletAddress = normalizeWalletAddress(data.sellerWalletAddress);
+
     user = await userCollection.findOne<OrderProps>(
       {
-        walletAddress: data.sellerWalletAddress,
+        walletAddress: sellerWalletAddressRaw,
         storecode: data.sellerStorecode,
       },
     );
+
+    if (!user && (normalizedSellerWalletAddress || sellerWalletAddressRaw)) {
+      const escapedSellerWalletAddress = String(
+        normalizedSellerWalletAddress || sellerWalletAddressRaw,
+      ).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      // Legacy store settings sometimes persist the same wallet with different casing.
+      user = await userCollection.findOne<OrderProps>(
+        {
+          storecode: data.sellerStorecode,
+          walletAddress: new RegExp(`^${escapedSellerWalletAddress}$`, 'i'),
+        },
+      );
+    }
+
     if (!user) {
       console.log('acceptBuyOrder user is null: ' + JSON.stringify(user));
       return null;
