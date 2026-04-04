@@ -102,6 +102,13 @@ import {
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
+const normalizeWalletAddress = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim().toLowerCase();
+};
+
 interface BuyOrder {
   _id: string;
   createdAt: string;
@@ -500,6 +507,7 @@ export default function Index({ params }: any) {
   const activeAccount = useActiveAccount();
 
   const address = activeAccount?.address;
+  const normalizedAddress = normalizeWalletAddress(address);
 
 
 
@@ -2467,12 +2475,12 @@ const fetchBuyOrders = async () => {
           if (data.result) {
   
             setStore(data.result);
-  
-            setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-            if (data.result?.adminWalletAddress === address) {
-              setIsAdmin(true);
-            }
+            const normalizedStoreAdminWalletAddress = normalizeWalletAddress(data.result?.adminWalletAddress);
+            setStoreAdminWalletAddress(normalizedStoreAdminWalletAddress);
+            setIsAdmin(Boolean(
+              normalizedStoreAdminWalletAddress
+              && normalizedStoreAdminWalletAddress === normalizedAddress,
+            ));
   
 
         } else {
@@ -2490,6 +2498,7 @@ const fetchBuyOrders = async () => {
           setStoreList(data.result.stores);
           setStore(null);
           setStoreAdminWalletAddress("");
+          setIsAdmin(false);
         }
   
           setFetchingStore(false);
@@ -2508,7 +2517,7 @@ const fetchBuyOrders = async () => {
       , 15000);
       return () => clearInterval(interval);
   
-    } , [params.center, address]);
+    } , [params.center, address, normalizedAddress]);
 
 
 
@@ -2691,14 +2700,24 @@ const fetchBuyOrders = async () => {
 
 
 
+  const normalizedStoreAdminWalletAddress = normalizeWalletAddress(
+    store?.adminWalletAddress || storeAdminWalletAddress,
+  );
+  const hasStoreAdminAccess = Boolean(
+    normalizedAddress
+    && normalizedStoreAdminWalletAddress
+    && normalizedAddress === normalizedStoreAdminWalletAddress,
+  );
+  const hasGlobalAdminRole = user?.role === "admin";
+
   // if store.adminWalletAddress is same as address, return "가맹점 관리자" else return "가맹점"
   // if user?.role is not "admin", return "가맹점"
 
   if (
     (address
     && store
-    &&  address !== store.adminWalletAddress
-    && user?.role !== "admin")
+    && !hasStoreAdminAccess
+    && !hasGlobalAdminRole)
     
 
   ) {

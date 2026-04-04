@@ -79,6 +79,13 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+const normalizeWalletAddress = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim().toLowerCase();
+};
+
 import { version } from "../../../config/version";
 
 
@@ -439,6 +446,7 @@ export default function Index({ params }: any) {
   const activeAccount = useActiveAccount();
 
   const address = activeAccount?.address;
+  const normalizedAddress = normalizeWalletAddress(address);
 
 
 
@@ -900,13 +908,17 @@ export default function Index({ params }: any) {
         if (data.result) {
 
           setStore(data.result);
+          const normalizedStoreAdminWalletAddress = normalizeWalletAddress(data.result?.adminWalletAddress);
+          setStoreAdminWalletAddress(normalizedStoreAdminWalletAddress);
+          setIsAdmin(Boolean(
+            normalizedStoreAdminWalletAddress
+            && normalizedStoreAdminWalletAddress === normalizedAddress,
+          ));
 
-          setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-          if (data.result?.adminWalletAddress === address) {
-            setIsAdmin(true);
-          }
-
+        }
+        else {
+          setStoreAdminWalletAddress("");
+          setIsAdmin(false);
         }
 
         setFetchingStore(false);
@@ -918,7 +930,7 @@ export default function Index({ params }: any) {
 
     fetchData();
 
-  } , [params.center, address]);
+  } , [params.center, address, normalizedAddress]);
 
   
 
@@ -1533,5 +1545,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-

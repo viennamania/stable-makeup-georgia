@@ -104,6 +104,13 @@ import {
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
+const normalizeWalletAddress = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim().toLowerCase();
+};
+
 
 interface BuyOrder {
   _id: string;
@@ -535,6 +542,7 @@ export default function Index({ params }: any) {
   const activeAccount = useActiveAccount();
 
   const address = activeAccount?.address;
+  const normalizedAddress = normalizeWalletAddress(address);
 
 
 
@@ -1107,12 +1115,12 @@ export default function Index({ params }: any) {
           if (data.result) {
   
             setStore(data.result);
-  
-            setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-            if (data.result?.adminWalletAddress === address) {
-              setIsAdmin(true);
-            }
+            const normalizedStoreAdminWalletAddress = normalizeWalletAddress(data.result?.adminWalletAddress);
+            setStoreAdminWalletAddress(normalizedStoreAdminWalletAddress);
+            setIsAdmin(Boolean(
+              normalizedStoreAdminWalletAddress
+              && normalizedStoreAdminWalletAddress === normalizedAddress,
+            ));
   
 
         } else {
@@ -1130,6 +1138,7 @@ export default function Index({ params }: any) {
           setStoreList(data.result.stores);
           setStore(null);
           setStoreAdminWalletAddress("");
+          setIsAdmin(false);
         }
   
           setFetchingStore(false);
@@ -1148,7 +1157,7 @@ export default function Index({ params }: any) {
       , 5000);
       return () => clearInterval(interval);
   
-    } , [params.center, address]);
+    } , [params.center, address, normalizedAddress]);
 
 
 
@@ -1623,6 +1632,14 @@ export default function Index({ params }: any) {
     };
   }, [address, store]);
 
+  const normalizedStoreAdminWalletAddress = normalizeWalletAddress(
+    store?.adminWalletAddress || storeAdminWalletAddress,
+  );
+  const hasStoreAdminAccess = Boolean(
+    normalizedAddress
+    && normalizedStoreAdminWalletAddress
+    && normalizedAddress === normalizedStoreAdminWalletAddress,
+  );
 
 
 
@@ -1875,9 +1892,9 @@ export default function Index({ params }: any) {
               </button>
               */}
 
-              {/* 가맹점 설정 */}
+              {/* 상점정보 */}
               {version === 'bangbang' &&
-              address === store?.adminWalletAddress && (
+              hasStoreAdminAccess && (
                 <div className="flex flex-row items-center gap-2">
                   <button
                     onClick={() => {
@@ -1887,7 +1904,7 @@ export default function Index({ params }: any) {
                       items-center justify-center
                       bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                   >
-                    <span className="text-sm text-zinc-50">가맹점 설정</span>
+                    <span className="text-sm text-zinc-50">상점정보</span>
                   </button>
                 </div>
               )}
