@@ -206,6 +206,8 @@ const normalizeUserTypeFilterValue = (
 const toApiUserTypeValue = (value: UserTypeFilterValue): string =>
   value === 'EMPTY' ? '' : value;
 
+const BUY_ORDERS_EXPORT_PAGE_SIZE = 200;
+
 
 
 
@@ -2594,22 +2596,41 @@ const fetchBuyOrders = async () => {
   const exportToCSV = async (fileName: string) => {
 
       setIsExporting(true);
+      try {
+        const items: BuyOrder[] = [];
+        let currentPage = 1;
+        let totalCount = Number.POSITIVE_INFINITY;
 
-      const response = await requestBuyOrders({
-        limit: 10000,
-        page: 1,
-      });
+        while ((currentPage - 1) * BUY_ORDERS_EXPORT_PAGE_SIZE < totalCount) {
+          const response = await requestBuyOrders({
+            limit: BUY_ORDERS_EXPORT_PAGE_SIZE,
+            page: currentPage,
+          });
 
-      if (!response.ok) {
-          setIsExporting(false);
-          console.error('Error fetching data');
-          return;
-      }
+          if (!response.ok) {
+            throw new Error('Failed to fetch buy orders for export');
+          }
 
-      const post = await response.json();
+          const post = await response.json();
+          const result = post?.result || {};
+          const pageOrders = Array.isArray(result?.orders) ? result.orders : [];
 
-  
-      const items = post.result.orders;
+          if (currentPage === 1) {
+            totalCount = Number(result?.totalCount || pageOrders.length || 0);
+          }
+
+          if (pageOrders.length === 0) {
+            break;
+          }
+
+          items.push(...pageOrders);
+
+          if (pageOrders.length < BUY_ORDERS_EXPORT_PAGE_SIZE) {
+            break;
+          }
+
+          currentPage += 1;
+        }
 
 
 
@@ -2695,9 +2716,12 @@ const fetchBuyOrders = async () => {
     ///XLSX.writeFile(data, fileNameExtension);
 
     XLSX.writeFile(wb, fileNameExtension);
-      
-  
-    setIsExporting(false);
+      } catch (error) {
+        console.error('Error exporting buy orders:', error);
+        toast.error('Failed to export buy orders');
+      } finally {
+        setIsExporting(false);
+      }
 
   }
 
