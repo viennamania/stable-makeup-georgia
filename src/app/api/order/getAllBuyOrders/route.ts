@@ -428,6 +428,7 @@ export async function POST(request: NextRequest) {
     searchTradeId,
     searchBuyer,
     searchDepositName,
+    searchDepositNameMode,
 
     searchStoreBankAccountNumber,
     searchBuyerBankAccountNumber,
@@ -498,6 +499,7 @@ export async function POST(request: NextRequest) {
   const safeWalletAddress = privilegedRead ? normalizeString(walletAddress) : "";
   const safeSearchBuyer = privilegedRead ? normalizeString(searchBuyer) : "";
   const safeSearchDepositName = privilegedRead ? normalizeString(searchDepositName) : "";
+  const safeSearchDepositNameMode = privilegedRead ? normalizeString(searchDepositNameMode) : "";
   const safeSearchStoreBankAccountNumber = privilegedRead ? normalizeString(searchStoreBankAccountNumber) : "";
   const safeSearchBuyerBankAccountNumber = privilegedRead ? normalizeString(searchBuyerBankAccountNumber) : "";
 
@@ -545,6 +547,7 @@ export async function POST(request: NextRequest) {
     searchTradeId: normalizeString(searchTradeId),
     searchBuyer: safeSearchBuyer,
     searchDepositName: safeSearchDepositName,
+    searchDepositNameMode: safeSearchDepositNameMode || "legacy",
     searchStoreBankAccountNumber: safeSearchStoreBankAccountNumber,
     searchBuyerBankAccountNumber: safeSearchBuyerBankAccountNumber,
     searchDepositCompleted: isSearchDepositCompleted,
@@ -584,6 +587,7 @@ export async function POST(request: NextRequest) {
               searchTradeId: normalizeString(searchTradeId),
               searchBuyer: safeSearchBuyer,
               searchDepositName: safeSearchDepositName,
+              searchDepositNameMode: safeSearchDepositNameMode || "legacy",
               searchStoreBankAccountNumber: safeSearchStoreBankAccountNumber,
               searchBuyerBankAccountNumber: safeSearchBuyerBankAccountNumber,
               searchDepositCompleted: isSearchDepositCompleted,

@@ -1141,6 +1141,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     searchOrderStatusCompleted: searchOrderStatusCompleted,
     searchBuyer: searchBuyer,
     searchDepositName: searchDepositName,
+    searchDepositNameMode: 'buyerExact',
     searchStoreBankAccountNumber: searchStoreBankAccountNumber,
     fromDate: searchFromDate,
     toDate: searchToDate,
