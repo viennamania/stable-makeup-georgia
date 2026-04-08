@@ -440,6 +440,7 @@ export async function POST(request: NextRequest) {
     manualConfirmPayment,
 
     userType,
+    includeSummary,
 
   } = body;
 
@@ -496,6 +497,7 @@ export async function POST(request: NextRequest) {
   const safeSearchOrderStatusCompleted = normalizeBoolean(searchOrderStatusCompleted);
   const safePrivateSale = normalizeBoolean(privateSale);
   const safeManualConfirmPayment = privilegedRead ? normalizeBoolean(manualConfirmPayment) : false;
+  const safeIncludeSummary = includeSummary === undefined ? true : normalizeBoolean(includeSummary);
   const safeWalletAddress = privilegedRead ? normalizeString(walletAddress) : "";
   const safeSearchBuyer = privilegedRead ? normalizeString(searchBuyer) : "";
   const safeSearchDepositName = privilegedRead ? normalizeString(searchDepositName) : "";
@@ -554,6 +556,7 @@ export async function POST(request: NextRequest) {
     fromDate: normalizeString(body.fromDate),
     toDate: normalizeString(body.toDate),
     manualConfirmPayment: safeManualConfirmPayment,
+    includeSummary: safeIncludeSummary,
     userType: userType === undefined ? "all" : normalizeString(userType),
   });
 
@@ -594,6 +597,7 @@ export async function POST(request: NextRequest) {
               fromDate: normalizeString(body.fromDate),
               toDate: normalizeString(body.toDate),
               manualConfirmPayment: safeManualConfirmPayment,
+              includeSummary: safeIncludeSummary,
               userType: userType === undefined ? "all" : normalizeString(userType) || "all",
             }),
             GET_ALL_BUY_ORDERS_ROUTE_TIMEOUT_MS,

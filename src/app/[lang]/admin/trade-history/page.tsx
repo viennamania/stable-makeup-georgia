@@ -2599,12 +2599,12 @@ const fetchBuyOrders = async () => {
       try {
         const items: BuyOrder[] = [];
         let currentPage = 1;
-        let totalCount = Number.POSITIVE_INFINITY;
 
-        while ((currentPage - 1) * BUY_ORDERS_EXPORT_PAGE_SIZE < totalCount) {
+        while (true) {
           const response = await requestBuyOrders({
             limit: BUY_ORDERS_EXPORT_PAGE_SIZE,
             page: currentPage,
+            includeSummary: false,
           });
 
           if (!response.ok) {
@@ -2614,10 +2614,6 @@ const fetchBuyOrders = async () => {
           const post = await response.json();
           const result = post?.result || {};
           const pageOrders = Array.isArray(result?.orders) ? result.orders : [];
-
-          if (currentPage === 1) {
-            totalCount = Number(result?.totalCount || pageOrders.length || 0);
-          }
 
           if (pageOrders.length === 0) {
             break;
