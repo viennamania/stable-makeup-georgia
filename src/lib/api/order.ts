@@ -493,6 +493,35 @@ const buildBuyOrderDepositNameFilter = ({
   };
 };
 
+const buildBuyOrderSellerBankAccountFilter = ({
+  searchStoreBankAccountNumber,
+}: {
+  searchStoreBankAccountNumber: string;
+}) => {
+  const normalizedSearchStoreBankAccountNumber = String(
+    searchStoreBankAccountNumber || "",
+  ).trim();
+
+  if (!normalizedSearchStoreBankAccountNumber) {
+    return {};
+  }
+
+  // Numeric input is treated as an account-number search. Non-numeric input
+  // from the admin UI is more likely an account-holder lookup.
+  if (/^[\d\s-]+$/.test(normalizedSearchStoreBankAccountNumber)) {
+    return {
+      "seller.bankInfo.accountNumber": {
+        $regex: escapeRegExp(normalizedSearchStoreBankAccountNumber),
+        $options: "i",
+      },
+    };
+  }
+
+  return {
+    "seller.bankInfo.accountHolder": normalizedSearchStoreBankAccountNumber,
+  };
+};
+
 const ensureBuyOrderReadIndexes = async (collection: any) => {
   if (globalBuyOrderReadState.__buyOrderReadIndexesReady) {
     return;
@@ -3165,6 +3194,9 @@ export async function getBuyOrders(
     searchDepositName,
     searchDepositNameMode: normalizeBuyOrderDepositNameSearchMode(searchDepositNameMode),
   });
+  const sellerBankAccountFilter = buildBuyOrderSellerBankAccountFilter({
+    searchStoreBankAccountNumber,
+  });
 
 
   const client = await clientPromise;
@@ -3214,7 +3246,7 @@ export async function getBuyOrders(
         ///...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
         // seller?.bankInfo?.accountNumber
-        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        ...sellerBankAccountFilter,
 
         ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
         ...searchDepositCompletedQuery,
@@ -3274,7 +3306,7 @@ export async function getBuyOrders(
 
         /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
         // seller?.bankInfo?.accountNumber
-        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        ...sellerBankAccountFilter,
 
         ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
         ...searchDepositCompletedQuery,
@@ -3412,7 +3444,7 @@ export async function getBuyOrders(
         // search store bank account number
         /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
         // seller?.bankInfo?.accountNumber
-        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        ...sellerBankAccountFilter,
 
         ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
         ...searchDepositCompletedQuery,
@@ -3485,7 +3517,7 @@ export async function getBuyOrders(
 
           //'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
                   // seller?.bankInfo?.accountNumber
-          ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...sellerBankAccountFilter,
 
           ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
           ...searchDepositCompletedQuery,
@@ -3584,7 +3616,7 @@ export async function getBuyOrders(
 
           ///'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
           // seller?.bankInfo?.accountNumber
-          ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...sellerBankAccountFilter,
 
           ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
           ...searchDepositCompletedQuery,
@@ -3669,7 +3701,7 @@ export async function getBuyOrders(
 
           ///'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
           // seller?.bankInfo?.accountNumber
-          ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...sellerBankAccountFilter,
 
           ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
           ...searchDepositCompletedQuery,
@@ -3799,10 +3831,10 @@ export async function getBuyOrders(
           ...storecodeQuery,
           nickname: { $regex: searchBuyer, $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
-          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          ...depositNameFilter,
           
           
-          //...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...sellerBankAccountFilter,
           //...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
           
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
@@ -3931,9 +3963,9 @@ export async function getBuyOrders(
           ...storecodeQuery,
           nickname: { $regex: String(searchBuyer), $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
-          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          ...depositNameFilter,
           
-          //...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...sellerBankAccountFilter,
           //...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
 
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
