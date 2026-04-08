@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
     manualConfirmPayment,
 
     userType,
+    includeSummary,
 
   } = body;
 
@@ -139,6 +140,9 @@ export async function POST(request: NextRequest) {
       toDate: normalizedToDate,
 
       manualConfirmPayment: manualConfirmPayment || false,
+      includeSummary: includeSummary === undefined
+        ? true
+        : (includeSummary === true || includeSummary === "true"),
 
       userType: userType === undefined ? 'all' : userType,
 

@@ -3124,6 +3124,7 @@ export async function getBuyOrders(
     toDate,
 
     manualConfirmPayment,
+    includeSummary = true,
 
     userType,
 
@@ -3156,6 +3157,7 @@ export async function getBuyOrders(
     toDate: string;
 
     manualConfirmPayment: boolean;
+    includeSummary?: boolean;
 
     userType: string; // 'all', '', 'AAA', 'BBB', 'CCC', 'DDD'
 
@@ -3277,6 +3279,28 @@ export async function getBuyOrders(
     .sort({ createdAt: -1 })
     .limit(limit).skip((page - 1) * limit).toArray();
 
+    if (!includeSummary) {
+      const results = await resultsPromise;
+      return {
+        totalCount: 0,
+        totalKrwAmount: 0,
+        totalUsdtAmount: 0,
+        totalTransferCount: 0,
+        totalTransferAmount: 0,
+        totalTransferAmountKRW: 0,
+        totalSettlementCount: 0,
+        totalSettlementAmount: 0,
+        totalSettlementAmountKRW: 0,
+        totalFeeAmount: 0,
+        totalFeeAmountKRW: 0,
+        totalAgentFeeAmount: 0,
+        totalAgentFeeAmountKRW: 0,
+        totalByUserType: [],
+        totalBySellerBankAccountNumber: [],
+        totalByBuyerBankAccountNumber: [],
+        orders: results,
+      };
+    }
 
     const totalCountPromise = collection.countDocuments(
       {
@@ -3482,6 +3506,29 @@ export async function getBuyOrders(
     .limit(limit).skip((page - 1) * limit)
     .toArray();
     //).sort({ paymentConfirmedAt: -1 }).limit(limit).skip((page - 1) * limit).toArray();
+
+    if (!includeSummary) {
+      const results = await resultsPromise;
+      return {
+        totalCount: 0,
+        totalKrwAmount: 0,
+        totalUsdtAmount: 0,
+        totalTransferCount: 0,
+        totalTransferAmount: 0,
+        totalTransferAmountKRW: 0,
+        totalSettlementCount: 0,
+        totalSettlementAmount: 0,
+        totalSettlementAmountKRW: 0,
+        totalFeeAmount: 0,
+        totalFeeAmountKRW: 0,
+        totalAgentFeeAmount: 0,
+        totalAgentFeeAmountKRW: 0,
+        totalByUserType: [],
+        totalBySellerBankAccountNumber: [],
+        totalByBuyerBankAccountNumber: [],
+        orders: results,
+      };
+    }
 
     
     
