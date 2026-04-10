@@ -2998,141 +2998,155 @@ export default function Index({ params, isYear2025 = false }: any) {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToCSV = async (fileName: string) => {
+      if (isExporting) {
+        return;
+      }
 
       setIsExporting(true);
 
-      const response = await fetch(buyOrdersApiPath, {
-          method: 'POST',
-          headers: {
+      try {
+        const batchLimit = 200;
+        let currentExportPage = 1;
+        let totalCountFromApi = 0;
+        const items: any[] = [];
+
+        while (true) {
+          const response = await fetch(buyOrdersApiPath, {
+            method: 'POST',
+            headers: {
               'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            {
+            },
+            body: JSON.stringify({
               storecode: searchStorecode,
               requesterStorecode: "admin",
-              limit: 10000,
-              page: 1,
+              limit: batchLimit,
+              page: currentExportPage,
               walletAddress: address,
               searchMyOrders: searchMyOrders,
-
-              searchOrderStatusCompleted: true,
-
+              searchTradeId: searchTradeId,
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
-
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
               searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
-
               searchDepositCompleted: searchDepositCompleted,
-
               privateSale: true,
-
               fromDate: searchFromDate,
               toDate: searchToDate,
+              includeSummary: currentExportPage === 1,
+            }),
+          });
 
+          if (!response.ok) {
+            throw new Error('청산내역을 불러오지 못했습니다.');
+          }
 
-            }
-          ),
-      })
+          const post = await response.json();
+          const orders = post?.result?.orders || [];
+          const totalCount = Number(post?.result?.totalCount || 0);
 
-      if (!response.ok) {
-          setIsExporting(false);
-          console.error('Error fetching data');
+          if (currentExportPage === 1) {
+            totalCountFromApi = totalCount;
+          }
+
+          if (!orders.length) {
+            break;
+          }
+
+          items.push(...orders);
+
+          if (
+            orders.length < batchLimit
+            || (totalCountFromApi > 0 && items.length >= totalCountFromApi)
+          ) {
+            break;
+          }
+
+          currentExportPage += 1;
+        }
+
+        if (!items.length) {
+          toast.error('다운로드할 청산내역이 없습니다.');
           return;
-      }
+        }
 
-      const post = await response.json();
-
-  
-      const items = post.result.orders;
+        const fileExtension = '.xlsx';
 
 
+        const formattedData  = [] as any[];
 
-      const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+        items.forEach((item: any, index: number) => {
+          const buyerDepositName = String(
+            item?.buyer?.depositName ||
+              item?.buyer?.bankInfo?.accountHolder ||
+              item?.buyer?.bankInfo?.bankAccountHolder ||
+              ""
+          ).trim();
 
-      const fileExtension = '.xlsx';
+          const buyerDepositBankName = String(
+            item?.buyer?.depositBankName ||
+              item?.buyer?.bankInfo?.bankName ||
+              ""
+          ).trim();
 
+          const buyerDepositBankAccountNumber = String(
+            item?.buyer?.depositBankAccountNumber ||
+              item?.buyer?.bankInfo?.accountNumber ||
+              item?.buyer?.bankInfo?.bankAccountNumber ||
+              ""
+          ).trim();
 
-      const formattedData  = [] as any[];
+          formattedData.push({
+              
+              'No': index + 1,
+              '주문번호': item.tradeId,
+              '주문일시': item.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '',
+              '가맹점명': item.store?.storeName || '',
 
-      //items.map((item, index ) => {
-      items.map((item: any, index: number) => {
-        const buyerDepositName = String(
-          item?.buyer?.depositName ||
-            item?.buyer?.bankInfo?.accountHolder ||
-            item?.buyer?.bankInfo?.bankAccountHolder ||
-            ""
-        ).trim();
+              '구매자 아이디': item?.buyer?.nickname ? item.buyer?.nickname : item.nickname || '',
+              '구매자 지갑주소': item.walletAddress || '',     
 
-        const buyerDepositBankName = String(
-          item?.buyer?.depositBankName ||
-            item?.buyer?.bankInfo?.bankName ||
-            ""
-        ).trim();
+              '구매자 예금주명': buyerDepositName,
+              '구매자 은행명': buyerDepositBankName,
+              '구매자 계좌번호': buyerDepositBankAccountNumber,
 
-        const buyerDepositBankAccountNumber = String(
-          item?.buyer?.depositBankAccountNumber ||
-            item?.buyer?.bankInfo?.accountNumber ||
-            item?.buyer?.bankInfo?.bankAccountNumber ||
-            ""
-        ).trim();
+              '판매자 지갑주소': item?.seller?.walletAddress || '',
+              '판매자 예금주명': item?.seller?.bankInfo?.accountHolder || '',
+              '판매자 은행명': item?.seller?.bankInfo?.bankName || '',
+              '판매자 계좌번호': item?.seller?.bankInfo?.accountNumber || '',
 
-        formattedData.push({
-            
-            'No': index + 1,
-            '주문번호': item.tradeId,
-            '주문일시': item.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '',
-            '가맹점명': item.store?.storeName || '',
+              'USDT 금액': item.usdtAmount || 0,
+              'KRW 금액': item.krwAmount || 0,
 
-            '구매자 아이디': item?.buyer?.nickname ? item.buyer?.nickname : item.nickname || '',
-            '구매자 지갑주소': item.walletAddress || '',     
+              '구매자에게 USDT 전송한 내역': item.transactionHash || '',
+              '구매자가 USDT 전송한 내역': item?.settlement?.txid || '',
+          });
 
-            '구매자 예금주명': buyerDepositName,
-            '구매자 은행명': buyerDepositBankName,
-            '구매자 계좌번호': buyerDepositBankAccountNumber,
-
-            '판매자 지갑주소': item?.seller?.walletAddress || '',
-            '판매자 예금주명': item?.seller?.bankInfo?.accountHolder || '',
-            '판매자 은행명': item?.seller?.bankInfo?.bankName || '',
-            '판매자 계좌번호': item?.seller?.bankInfo?.accountNumber || '',
-
-            'USDT 금액': item.usdtAmount || 0,
-            'KRW 금액': item.krwAmount || 0,
-
-            '구매자에게 USDT 전송한 내역': item.transactionHash || '',
-            '구매자가 USDT 전송한 내역': item?.settlement?.txid || '',
         });
 
-      });
 
 
+        const ws = XLSX.utils.json_to_sheet(formattedData);
 
-    const ws = XLSX.utils.json_to_sheet(formattedData);
+        const wb = { Sheets: { data: ws }, SheetNames: ['data'] };
 
-    const wb = { Sheets: { data: ws }, SheetNames: ['data'] };
+        const now = new Date();
 
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
 
-    const data = new Blob([excelBuffer], { type: fileType });
+        const time = `${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
 
-    const now = new Date();
+        const dateTime = `${date}_${time}`;
 
-    const date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+        const fileNameExtension = `${fileName}_${dateTime}${fileExtension}`;
 
-    const time = `${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-
-    const dateTime = `${date}_${time}`;
-
-    const fileNameExtension = `${fileName}_${dateTime}${fileExtension}`;
-
-    ///XLSX.writeFile(data  , fileNameExtension);
-
-    ///XLSX.writeFile(data, fileNameExtension);
-
-    XLSX.writeFile(wb, fileNameExtension);
-      
-  
-    setIsExporting(false);
+        XLSX.writeFile(wb, fileNameExtension);
+        toast.success(`청산내역 ${items.length.toLocaleString('ko-KR')}건을 다운로드했습니다.`);
+      } catch (error: any) {
+        console.error('청산내역 엑셀 다운로드 실패', error);
+        toast.error(error?.message || '엑셀 다운로드에 실패했습니다.');
+      } finally {
+        setIsExporting(false);
+      }
 
   }
 
