@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ethers } from "ethers";
 
 import {
 	insertBuyOrder,
@@ -27,6 +28,8 @@ import {
   getUserWalletAddressByStorecodeAndNickname,
 } from '@lib/api/user';
 import { validateBuyOrderStoreAvailability } from "@/lib/server/buy-order-store-validation";
+import { buildUserCreationAudit } from "@/lib/server/user-creation-security";
+import clientPromise, { dbName } from "@/lib/mongodb";
 
 
 
@@ -54,6 +57,14 @@ curl -X GET "http://localhost:3000/api/order/setBuyOrderForStore?clientid=150b53
 */
 
 const ROUTE = "/api/order/setBuyOrderForStore";
+
+const normalizeOptionalString = (value: unknown): string => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+};
 
 async function writePublicOrderApiCallLog({
   request,
@@ -87,19 +98,102 @@ async function writePublicOrderApiCallLog({
   }
 }
 
+async function autoRegisterStoreUserForBuyOrder({
+  request,
+  storecode,
+  nickname,
+  depositorName,
+  store,
+}: {
+  request: NextRequest;
+  storecode: string;
+  nickname: string;
+  depositorName: string;
+  store: any;
+}) {
+  const safeStorecode = normalizeOptionalString(storecode);
+  const safeNickname = normalizeOptionalString(nickname);
+  const safeDepositorName = normalizeOptionalString(depositorName);
+
+  if (!safeStorecode || !safeNickname || !safeDepositorName || !store) {
+    return null;
+  }
+
+  const existingUser = await getUserWalletAddressByStorecodeAndNickname(safeStorecode, safeNickname);
+  if (existingUser) {
+    return existingUser;
+  }
+
+  const wallet = ethers.Wallet.createRandom();
+  const creationAudit = buildUserCreationAudit(request, ROUTE);
+  const nowIso = new Date().toISOString();
+  const client = await clientPromise;
+  const userCollection = client.db(dbName).collection('users');
+  const storeCollection = client.db(dbName).collection('stores');
+
+  const duplicateUser = await userCollection.findOne(
+    {
+      storecode: safeStorecode,
+      nickname: safeNickname,
+    },
+    { projection: { _id: 1 } },
+  );
+  if (duplicateUser) {
+    return await getUserWalletAddressByStorecodeAndNickname(safeStorecode, safeNickname);
+  }
+
+  const insertResult = await userCollection.insertOne({
+    id: Math.floor(Math.random() * 9000000) + 1000000,
+    email: "",
+    nickname: safeNickname,
+    mobile: "",
+    storecode: safeStorecode,
+    store,
+    walletAddress: wallet.address,
+    walletPrivateKey: wallet.privateKey,
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    settlementAmountOfFee: "0",
+    buyer: {
+      depositName: safeDepositorName,
+    },
+    liveOnAndOff: true,
+    createdByApi: ROUTE,
+    creationAudit,
+  } as any);
+
+  if (!insertResult?.acknowledged) {
+    return null;
+  }
+
+  const totalBuyerCount = await userCollection.countDocuments({
+    storecode: safeStorecode,
+    walletAddress: { $exists: true, $ne: null },
+    buyer: { $exists: true, $ne: null },
+  });
+  await storeCollection.updateOne(
+    { storecode: safeStorecode },
+    { $set: { totalBuyerCount } },
+  );
+
+  return await getUserWalletAddressByStorecodeAndNickname(safeStorecode, safeNickname);
+}
+
 async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequest) {
 
   const clientid = payload.clientid || payload.clientId;
   const storecode = payload.storecode || payload.storeCode;
   const userid = payload.userid || payload.userId || payload.nickname;
+  const depositorName = normalizeOptionalString(payload.depositorName);
   const amount = payload.amount ?? payload.krwAmount;
   const returnUrl = payload.returnUrl;
   const ip = getRequestIp(request);
   const country = getRequestCountry(request);
+  const nickname = normalizeOptionalString(userid);
 
   ///console.log("setBuyOrder =====  body", payload);
 
-  if (!clientid || !storecode || !userid || !amount) {
+  if (!clientid || !storecode || !nickname || !amount) {
     await writePublicOrderApiCallLog({
       request,
       payload,
@@ -135,8 +229,6 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
     , { status: 400 });
 
   }
-
-  const nickname = userid;
   const krwAmount = Number(amount);
 
   const storeValidation = await validateBuyOrderStoreAvailability(storecode);
@@ -173,7 +265,38 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
 
 
   // walletAddress from storecode, nickname
-  const userInfo = await getUserWalletAddressByStorecodeAndNickname(resolvedStorecode, nickname);
+  let userInfo = await getUserWalletAddressByStorecodeAndNickname(resolvedStorecode, nickname);
+  let autoRegisteredUser = false;
+
+  if (!userInfo && depositorName) {
+    userInfo = await autoRegisterStoreUserForBuyOrder({
+      request,
+      storecode: resolvedStorecode,
+      nickname,
+      depositorName,
+      store: storeValidation.store,
+    });
+
+    if (!userInfo) {
+      await writePublicOrderApiCallLog({
+        request,
+        payload,
+        status: "error",
+        reason: "failed_to_auto_register_user",
+        resultMeta: {
+          storecode: resolvedStorecode,
+          nickname,
+        },
+      });
+      return NextResponse.json({
+        result: null,
+        error: "Failed to register user for buy order",
+      }
+      , { status: 500 });
+    }
+
+    autoRegisteredUser = true;
+  }
 
   if (!userInfo) {
     await writePublicOrderApiCallLog({
@@ -339,6 +462,7 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
       storecode: resolvedStorecode,
       nickname,
       clientId: String(clientid || "").trim() || null,
+      autoRegisteredUser,
     },
   });
 
