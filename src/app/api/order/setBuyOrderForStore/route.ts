@@ -216,7 +216,12 @@ async function autoRegisterStoreUserForBuyOrder({
     { $set: { totalBuyerCount } },
   );
 
-  return await getUserWalletAddressByStorecodeAndNickname(safeStorecode, safeNickname);
+  return {
+    walletAddress: smartAccountAddress,
+    buyer: {
+      depositName: safeDepositorName,
+    },
+  };
 }
 
 async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequest) {
