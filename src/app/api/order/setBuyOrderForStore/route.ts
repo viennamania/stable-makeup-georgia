@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ethers } from "ethers";
+import { createThirdwebClient } from "thirdweb";
+import { polygon } from "thirdweb/chains";
+import {
+  privateKeyToAccount,
+  smartWallet,
+} from "thirdweb/wallets";
 
 import {
 	insertBuyOrder,
@@ -124,7 +130,40 @@ async function autoRegisterStoreUserForBuyOrder({
     return existingUser;
   }
 
-  const wallet = ethers.Wallet.createRandom();
+  const userWalletPrivateKey = ethers.Wallet.createRandom().privateKey;
+  if (!userWalletPrivateKey) {
+    return null;
+  }
+
+  const thirdwebSecretKey = normalizeOptionalString(process.env.THIRDWEB_SECRET_KEY);
+  if (!thirdwebSecretKey) {
+    throw new Error("THIRDWEB_SECRET_KEY is required");
+  }
+
+  const thirdwebClient = createThirdwebClient({
+    secretKey: thirdwebSecretKey,
+  });
+  const personalAccount = privateKeyToAccount({
+    client: thirdwebClient,
+    privateKey: userWalletPrivateKey,
+  });
+
+  const wallet = smartWallet({
+    chain: polygon,
+    sponsorGas: true,
+  });
+
+  const smartAccount = await wallet.connect({
+    client: thirdwebClient,
+    personalAccount,
+  });
+
+  const smartAccountAddress = normalizeOptionalString(smartAccount?.address);
+  const signerAddress = normalizeOptionalString(personalAccount?.address);
+  if (!smartAccountAddress || !signerAddress) {
+    throw new Error("Failed to create buyer smart account wallet");
+  }
+
   const creationAudit = buildUserCreationAudit(request, ROUTE);
   const nowIso = new Date().toISOString();
   const client = await clientPromise;
@@ -149,8 +188,9 @@ async function autoRegisterStoreUserForBuyOrder({
     mobile: "",
     storecode: safeStorecode,
     store,
-    walletAddress: wallet.address,
-    walletPrivateKey: wallet.privateKey,
+    walletAddress: smartAccountAddress,
+    signerAddress,
+    walletPrivateKey: userWalletPrivateKey,
     createdAt: nowIso,
     updatedAt: nowIso,
     settlementAmountOfFee: "0",
