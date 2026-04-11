@@ -189,6 +189,52 @@ const getUserBuyOrderStatusKey = (
   return `${normalizedStorecode}::${normalizedWalletAddress}`;
 };
 
+const getWalletAddressCandidates = (walletAddress: unknown) => {
+  const walletAddressRaw = String(walletAddress || "").trim();
+  if (!walletAddressRaw) {
+    return [];
+  }
+
+  return Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
+};
+
+const buildWalletAliasExactClauses = (walletAddress: unknown) => {
+  const walletAddressCandidates = getWalletAddressCandidates(walletAddress);
+  if (walletAddressCandidates.length === 0) {
+    return [];
+  }
+
+  return [
+    { walletAddress: { $in: walletAddressCandidates } },
+    { signerAddress: { $in: walletAddressCandidates } },
+  ];
+};
+
+const buildWalletAliasRegexClauses = (walletAddress: unknown) => {
+  const walletAddressRaw = String(walletAddress || "").trim();
+  if (!walletAddressRaw) {
+    return [];
+  }
+
+  const walletAddressRegex = new RegExp(`^${escapeRegexText(walletAddressRaw)}$`, "i");
+  return [
+    { walletAddress: walletAddressRegex },
+    { signerAddress: walletAddressRegex },
+  ];
+};
+
+const getUserWalletAliases = (user: Partial<UserProps> | null | undefined) => {
+  return Array.from(
+    new Set(
+      [user?.walletAddress, user?.signerAddress]
+        .map((value) => String(value || "").trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+};
+
 type LatestUserBuyOrderStatus = {
   _id: {
     storecode: string;
@@ -215,24 +261,36 @@ async function hydrateUsersWithLatestBuyOrderStatus({
     string,
     { normalizedStorecode: string; normalizedWalletAddress: string; storecodeCandidates: string[] }
   >();
+  const userAliasKeys = new Map<string, string[]>();
 
   for (const user of users) {
     const rawStorecode = String(user?.storecode || "").trim();
     const normalizedStorecode = rawStorecode.toLowerCase();
-    const normalizedWalletAddress = String(user?.walletAddress || "").trim().toLowerCase();
-    const key = getUserBuyOrderStatusKey(rawStorecode, normalizedWalletAddress);
+    const primaryKey = getUserBuyOrderStatusKey(rawStorecode, user?.walletAddress);
+    const walletAliases = getUserWalletAliases(user);
 
-    if (!key) {
+    if (!primaryKey || walletAliases.length === 0) {
       continue;
     }
 
-    keys.set(key, {
-      normalizedStorecode,
-      normalizedWalletAddress,
-      storecodeCandidates: Array.from(
-        new Set([rawStorecode, normalizedStorecode].filter(Boolean)),
-      ),
-    });
+    const aliasKeys: string[] = [];
+    for (const normalizedWalletAddress of walletAliases) {
+      const key = getUserBuyOrderStatusKey(rawStorecode, normalizedWalletAddress);
+      if (!key) {
+        continue;
+      }
+
+      aliasKeys.push(key);
+      keys.set(key, {
+        normalizedStorecode,
+        normalizedWalletAddress,
+        storecodeCandidates: Array.from(
+          new Set([rawStorecode, normalizedStorecode].filter(Boolean)),
+        ),
+      });
+    }
+
+    userAliasKeys.set(primaryKey, aliasKeys);
   }
 
   if (keys.size === 0) {
@@ -311,20 +369,29 @@ async function hydrateUsersWithLatestBuyOrderStatus({
 
   return users.map((user) => {
     const key = getUserBuyOrderStatusKey(user?.storecode, user?.walletAddress);
-    const latestOrder = key ? latestOrderMap.get(key) : null;
+    const latestOrder = key
+      ? (userAliasKeys.get(key) || [])
+          .map((aliasKey) => latestOrderMap.get(aliasKey) || null)
+          .filter(Boolean)
+          .sort((left, right) => {
+            const leftMs = Date.parse(String(left?.latestBuyOrderCreatedAt || ""));
+            const rightMs = Date.parse(String(right?.latestBuyOrderCreatedAt || ""));
+            return (Number.isFinite(rightMs) ? rightMs : 0) - (Number.isFinite(leftMs) ? leftMs : 0);
+          })[0] || null
+      : null;
 
     return {
       ...user,
       buyOrderStatus: latestOrder?.buyOrderStatus
         ? String(latestOrder.buyOrderStatus)
-        : "",
+        : String(user?.buyOrderStatus || ""),
       latestBuyOrderId: latestOrder?.latestBuyOrderId
         ? String(latestOrder.latestBuyOrderId)
-        : "",
+        : String(user?.latestBuyOrderId || ""),
       latestBuyOrderTradeId: latestOrder?.latestBuyOrderTradeId
         ? String(latestOrder.latestBuyOrderTradeId)
-        : "",
-      latestBuyOrderCreatedAt: latestOrder?.latestBuyOrderCreatedAt || "",
+        : String(user?.latestBuyOrderTradeId || ""),
+      latestBuyOrderCreatedAt: latestOrder?.latestBuyOrderCreatedAt || String(user?.latestBuyOrderCreatedAt || ""),
     };
   });
 }
@@ -1108,13 +1175,9 @@ export async function getOneByWalletAddress(
     return null;
   }
 
-  const walletAddressCandidates = Array.from(
-    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
-  );
-
   const exactMatches = await collection.find<UserProps>({
     storecode: storecode,
-    walletAddress: { $in: walletAddressCandidates },
+    $or: buildWalletAliasExactClauses(walletAddressRaw),
   }).limit(25).toArray();
 
   const exactMatch = selectPreferredUserByWallet(exactMatches);
@@ -1122,11 +1185,9 @@ export async function getOneByWalletAddress(
     return exactMatch as UserProps;
   }
 
-  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
   const regexMatches = await collection.find<UserProps>({
     storecode: storecode,
-    walletAddress: walletAddressRegex,
+    $or: buildWalletAliasRegexClauses(walletAddressRaw),
   }).limit(25).toArray();
 
   return selectPreferredUserByWallet(regexMatches) as UserProps | null;
@@ -1148,12 +1209,8 @@ export async function getOneByWalletAddressAcrossStores(
     return null;
   }
 
-  const walletAddressCandidates = Array.from(
-    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
-  );
-
   const exactMatches = await collection.find<UserProps>({
-    walletAddress: { $in: walletAddressCandidates },
+    $or: buildWalletAliasExactClauses(walletAddressRaw),
   }).limit(25).toArray();
 
   const exactMatch = selectPreferredUserByWallet(exactMatches);
@@ -1161,11 +1218,8 @@ export async function getOneByWalletAddressAcrossStores(
     return exactMatch as UserProps;
   }
 
-  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
-
   const regexMatches = await collection.find<UserProps>({
-    walletAddress: walletAddressRegex,
+    $or: buildWalletAliasRegexClauses(walletAddressRaw),
   }).limit(25).toArray();
 
   return selectPreferredUserByWallet(regexMatches) as UserProps | null;
@@ -1275,14 +1329,10 @@ export async function getOneByStorecodeAndWalletAddress(
     liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
   };
 
-  const walletAddressCandidates = Array.from(
-    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
-  );
-
   const results = await collection.findOne<UserProps>(
     {
       storecode: storecode,
-      walletAddress: { $in: walletAddressCandidates },
+      $or: buildWalletAliasExactClauses(walletAddressRaw),
     },
     { projection },
   );
@@ -1291,13 +1341,10 @@ export async function getOneByStorecodeAndWalletAddress(
     return results;
   }
 
-  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
-
   return await collection.findOne<UserProps>(
     {
       storecode: storecode,
-      walletAddress: walletAddressRegex,
+      $or: buildWalletAliasRegexClauses(walletAddressRaw),
     },
     { projection },
   );
@@ -2514,10 +2561,6 @@ export async function getOneServerWalletByStorecodeAndWalletAddress(
   const storecodeCandidates = Array.from(
     new Set([safeStorecode, safeStorecode.toLowerCase()].filter(Boolean)),
   );
-  const walletAddressCandidates = Array.from(
-    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
-  );
-
   const baseQuery = {
     storecode: storecodeCandidates.length === 1
       ? storecodeCandidates[0]
@@ -2527,19 +2570,16 @@ export async function getOneServerWalletByStorecodeAndWalletAddress(
 
   const found = await collection.findOne<UserProps>({
     ...baseQuery,
-    walletAddress: { $in: walletAddressCandidates },
+    $or: buildWalletAliasExactClauses(walletAddressRaw),
   });
 
   if (found) {
     return found;
   }
 
-  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
-
   return await collection.findOne<UserProps>({
     ...baseQuery,
-    walletAddress: walletAddressRegex,
+    $or: buildWalletAliasRegexClauses(walletAddressRaw),
   });
 }
 

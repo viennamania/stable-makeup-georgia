@@ -2674,6 +2674,15 @@ export default function Index({ params }: any) {
                     </button>
                     <button
                       onClick={() => {
+                        const url = `/${params.lang}/admin/return-url-log`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full bg-teal-700 text-sm text-white px-4 py-2 rounded-lg hover:bg-teal-600"
+                    >
+                      returnUrl 콜백 로그
+                    </button>
+                    <button
+                      onClick={() => {
                         const url = `/${params.lang}/admin/public-buyer-api-log`;
                         window.open(url, "_blank", "noopener,noreferrer");
                       }}

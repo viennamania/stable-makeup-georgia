@@ -32,6 +32,7 @@ import {
   WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE,
 } from "@/lib/clearance-webhook-order";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { insertReturnUrlLog } from "@/lib/api/returnUrlLog";
 
 
 
@@ -657,16 +658,60 @@ async function syncUserBuyOrderStateByWalletAndStorecode({
     return null;
   }
 
-  const walletAddressRegex = new RegExp(
+  const userCollection = client.db(dbName).collection("users");
+  const inputWalletAddressRegex = new RegExp(
     `^${escapeRegExp(normalizedWalletAddress)}$`,
     "i",
   );
+  const matchedUsers = await userCollection.find(
+    {
+      storecode: normalizedStorecode,
+      $or: [
+        { walletAddress: inputWalletAddressRegex },
+        { signerAddress: inputWalletAddressRegex },
+      ],
+    },
+    {
+      projection: {
+        _id: 1,
+        walletAddress: 1,
+        signerAddress: 1,
+      },
+    },
+  ).limit(10).toArray();
+
+  if (matchedUsers.length === 0) {
+    return null;
+  }
+
+  const matchedUserIds = matchedUsers
+    .map((user) => user?._id)
+    .filter(Boolean);
+  const walletAliases = Array.from(
+    new Set(
+      [
+        normalizedWalletAddress,
+        ...matchedUsers.flatMap((user) => [
+          normalizeWalletAddress(user?.walletAddress),
+          normalizeWalletAddress(user?.signerAddress),
+        ]),
+      ].filter(Boolean),
+    ),
+  ) as string[];
+
+  if (matchedUserIds.length === 0 || walletAliases.length === 0) {
+    return null;
+  }
+
+  const walletAddressRegexClauses = walletAliases.map((aliasWalletAddress) => ({
+    walletAddress: new RegExp(`^${escapeRegExp(aliasWalletAddress)}$`, "i"),
+  }));
 
   const [latestOrder, totalPaymentConfirmed] = await Promise.all([
     buyOrderCollection.findOne(
       {
         storecode: normalizedStorecode,
-        walletAddress: walletAddressRegex,
+        $or: walletAddressRegexClauses,
         status: { $in: [...USER_BUYORDER_SYNC_STATUSES] },
       },
       {
@@ -685,7 +730,7 @@ async function syncUserBuyOrderStateByWalletAndStorecode({
       {
         $match: {
           storecode: normalizedStorecode,
-          walletAddress: walletAddressRegex,
+          $or: walletAddressRegexClauses,
           status: "paymentConfirmed",
         },
       },
@@ -705,11 +750,9 @@ async function syncUserBuyOrderStateByWalletAndStorecode({
     ? String(latestOrder.status)
     : (totals ? "paymentConfirmed" : "");
 
-  const userCollection = client.db(dbName).collection("users");
   const result = await userCollection.updateMany(
     {
-      storecode: normalizedStorecode,
-      walletAddress: walletAddressRegex,
+      _id: { $in: matchedUserIds },
     },
     {
       $set: {
@@ -5861,60 +5904,103 @@ export async function buyOrderConfirmPayment(data: any) {
       }
       */
 
-      // returnUrl result log collection
-      const returnUrlLogCollection = client.db(dbName).collection('returnUrlLogs');
+      const writeReturnUrlLog = async (payload: any) => {
+        try {
+          await insertReturnUrlLog({
+            source: "order.buyOrderConfirmPayment",
+            orderId: String(data?.orderId || ""),
+            tradeId: String(order?.tradeId || ""),
+            storecode: String(order?.storecode || ""),
+            nickname: String(order?.nickname || ""),
+            walletAddress: String(order?.walletAddress || ""),
+            orderNumber: String(order?.orderNumber || ""),
+            ...payload,
+          });
+        } catch (logError) {
+          console.error("Error writing returnUrl log:", logError);
+        }
+      };
 
       // 조지아 WOOD site
       if (
         order.storecode === 'qibgieiu'
       ) {
+        const returnUrl = 'https://wood-505.com/tools/arena/ChangeBalance2.php';
+        const requestBody = {
+          indexkey: order.tradeId,
+          userid: order.nickname,
+          amount: order.krwAmount,
+        };
+        const startedAt = Date.now();
+
         try {
-          const returnUrl = 'https://wood-505.com/tools/arena/ChangeBalance2.php';
           const response = await fetch(returnUrl,
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
-                indexkey: order.tradeId,
-                userid: order.nickname,
-                amount: order.krwAmount,
-              }),
+              body: JSON.stringify(requestBody),
             }
           );
 
           const responseData = await response.text();
 
 
-          // log returnUrl call result
-          await returnUrlLogCollection.insertOne({
-            tradeId: order.tradeId,
-            returnUrl: returnUrl,
-            requestBody: {
-              indexkey: order.tradeId,
-              userid: order.nickname,
-              amount: order.krwAmount,
+          await writeReturnUrlLog({
+            callbackKind: "wood-override-post",
+            status: response.ok ? "success" : "error",
+            requestMethod: "POST",
+            requestUrl: returnUrl,
+            requestHeaders: {
+              "Content-Type": "application/json",
             },
+            requestBody,
+            responseStatus: response.status,
+            responseStatusText: response.statusText,
+            responseOk: response.ok,
             responseBody: responseData,
-            createdAt: new Date().toISOString(),
+            durationMs: Date.now() - startedAt,
           });
 
+          if (!response.ok) {
+            console.error("ReturnUrl callback failed for storecode qibgieiu:", {
+              tradeId: order.tradeId,
+              status: response.status,
+              statusText: response.statusText,
+            });
+          }
 
         } catch (error) {
+          await writeReturnUrlLog({
+            callbackKind: "wood-override-post",
+            status: "error",
+            requestMethod: "POST",
+            requestUrl: returnUrl,
+            requestHeaders: {
+              "Content-Type": "application/json",
+            },
+            requestBody,
+            errorMessage: error instanceof Error ? error.message : String(error),
+            durationMs: Date.now() - startedAt,
+          });
           console.error('Error calling external API for storecode qibgieiu:', error);
         }
       } else {
 
         if (order.returnUrl) {
           ///shop/influ_coin/orderform.php?oid=123456&paystate=4&pay_date=2025-10-2414:30:25&mul_no=1
+          let finalUrl = order.returnUrl;
+          let mergedParams: Record<string, string> = {};
+          const startedAt = Date.now();
+
           try {
 
             // parse get prams from returnUrl
             const url = new URL(order.returnUrl);
-            const existingParams = Object.fromEntries(url.searchParams);
+            const existingParams = Object.fromEntries(url.searchParams.entries());
             // merge existing get prams with get prams
-            const mergedParams = {
+            mergedParams = {
               ...existingParams,
               paystate: '4',
               pay_date: new Date().toISOString().replace('T', '').substring(0, 19),
@@ -5922,7 +6008,7 @@ export async function buyOrderConfirmPayment(data: any) {
               orderNumber: order.orderNumber || '',
             };
             // set merged get prams to url
-            const finalUrl = url.origin + url.pathname + '?' + new URLSearchParams(mergedParams).toString();
+            finalUrl = url.origin + url.pathname + '?' + new URLSearchParams(mergedParams).toString();
 
             console.log('Calling returnUrl API: ' + finalUrl);
 
@@ -5934,16 +6020,38 @@ export async function buyOrderConfirmPayment(data: any) {
 
             const responseData = await response.text();
 
-            // log returnUrl call result
-            await returnUrlLogCollection.insertOne({
-              tradeId: order.tradeId,
-              returnUrl: finalUrl,
+            await writeReturnUrlLog({
+              callbackKind: "return-url-get",
+              status: response.ok ? "success" : "error",
+              requestMethod: "GET",
+              requestUrl: finalUrl,
+              requestQuery: mergedParams,
+              responseStatus: response.status,
+              responseStatusText: response.statusText,
+              responseOk: response.ok,
               responseBody: responseData,
-              createdAt: new Date().toISOString(),
+              durationMs: Date.now() - startedAt,
             });
 
+            if (!response.ok) {
+              console.error("ReturnUrl callback failed:", {
+                tradeId: order.tradeId,
+                status: response.status,
+                statusText: response.statusText,
+                returnUrl: finalUrl,
+              });
+            }
 
           } catch (error) {
+            await writeReturnUrlLog({
+              callbackKind: "return-url-get",
+              status: "error",
+              requestMethod: "GET",
+              requestUrl: finalUrl,
+              requestQuery: mergedParams,
+              errorMessage: error instanceof Error ? error.message : String(error),
+              durationMs: Date.now() - startedAt,
+            });
             console.error('Error calling returnUrl API:', error);
           }
         }
