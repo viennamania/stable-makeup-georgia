@@ -658,12 +658,18 @@ async function syncUserBuyOrderStateByWalletAndStorecode({
     return null;
   }
 
+  type MatchedUserWalletDoc = {
+    _id?: ObjectId;
+    walletAddress?: string | null;
+    signerAddress?: string | null;
+  };
+
   const userCollection = client.db(dbName).collection("users");
   const inputWalletAddressRegex = new RegExp(
     `^${escapeRegExp(normalizedWalletAddress)}$`,
     "i",
   );
-  const matchedUsers = await userCollection.find(
+  const matchedUsers = (await userCollection.find(
     {
       storecode: normalizedStorecode,
       $or: [
@@ -678,7 +684,7 @@ async function syncUserBuyOrderStateByWalletAndStorecode({
         signerAddress: 1,
       },
     },
-  ).limit(10).toArray();
+  ).limit(10).toArray()) as MatchedUserWalletDoc[];
 
   if (matchedUsers.length === 0) {
     return null;
@@ -686,7 +692,7 @@ async function syncUserBuyOrderStateByWalletAndStorecode({
 
   const matchedUserIds = matchedUsers
     .map((user) => user?._id)
-    .filter(Boolean);
+    .filter((value): value is ObjectId => Boolean(value));
   const walletAliases = Array.from(
     new Set(
       [
