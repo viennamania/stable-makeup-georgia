@@ -33,7 +33,10 @@ import {
 import {
   getUserWalletAddressByStorecodeAndNickname,
 } from '@lib/api/user';
-import { validateBuyOrderStoreAvailability } from "@/lib/server/buy-order-store-validation";
+import {
+  validateBuyOrderStoreAvailability,
+  validateBuyOrderStorePaymentAmount,
+} from "@/lib/server/buy-order-store-validation";
 import { buildUserCreationAudit } from "@/lib/server/user-creation-security";
 import clientPromise, { dbName } from "@/lib/mongodb";
 
@@ -274,8 +277,6 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
     , { status: 400 });
 
   }
-  const krwAmount = Number(amount);
-
   const storeValidation = await validateBuyOrderStoreAvailability(storecode);
   if (!storeValidation.ok) {
     await writePublicOrderApiCallLog({
@@ -293,6 +294,27 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
     }, { status: storeValidation.status });
   }
   const resolvedStorecode = storeValidation.storecode;
+  const amountValidation = validateBuyOrderStorePaymentAmount({
+    store: storeValidation.store,
+    krwAmountRaw: amount,
+  });
+  if (!amountValidation.ok) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: amountValidation.reason,
+      resultMeta: {
+        storecode: resolvedStorecode,
+        maxPaymentAmountKRW: amountValidation.maxPaymentAmountKRW ?? null,
+      },
+    });
+    return NextResponse.json({
+      result: null,
+      error: amountValidation.error,
+    }, { status: amountValidation.status });
+  }
+  const { krwAmount } = amountValidation;
 
 
   // 

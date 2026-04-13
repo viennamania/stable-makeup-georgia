@@ -14,8 +14,8 @@ import {
   getOneByWalletAddress,
 } from '@lib/api/user';
 
-const ACCEPT_BUY_ORDER_TASK_DELAY_MIN_SECONDS = 5;
-const ACCEPT_BUY_ORDER_TASK_DELAY_MAX_SECONDS = 20;
+const ACCEPT_BUY_ORDER_TASK_DELAY_MIN_SECONDS = 1;
+const ACCEPT_BUY_ORDER_TASK_DELAY_MAX_SECONDS = 5;
 
 const getRandomAcceptanceDelaySeconds = () => {
   if (ACCEPT_BUY_ORDER_TASK_DELAY_MAX_SECONDS <= ACCEPT_BUY_ORDER_TASK_DELAY_MIN_SECONDS) {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     console.log("acceptanceDelaySeconds", acceptanceDelaySeconds);
     console.log("acceptanceThreshold", acceptanceThreshold);
 
-    // Only auto-accept orders that have been waiting at least 5-20 seconds.
+    // Only auto-accept orders that have been waiting at least 1-5 seconds.
     if (buyorder.createdAt > acceptanceThreshold) {
       console.log("order.createdAt is newer than acceptance delay");
       continue;

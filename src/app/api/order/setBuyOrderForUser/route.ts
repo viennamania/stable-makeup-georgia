@@ -6,8 +6,10 @@ import {
 } from '@lib/api/order';
 
 import {
+  getStoreByStorecode,
   getPrivateSellerWalletAddressFromStorecode,
 } from '@lib/api/store';
+import { validateBuyOrderStorePaymentAmount } from "@/lib/server/buy-order-store-validation";
 
 
 export async function POST(request: NextRequest) {
@@ -67,6 +69,22 @@ export async function POST(request: NextRequest) {
     }, { status: 409 });
   }
 
+  const store = await getStoreByStorecode({ storecode });
+  let normalizedKrwAmount = krwAmount;
+  if (store) {
+    const amountValidation = validateBuyOrderStorePaymentAmount({
+      store,
+      krwAmountRaw: krwAmount,
+    });
+    if (!amountValidation.ok) {
+      return NextResponse.json({
+        result: null,
+        error: amountValidation.error,
+      }, { status: amountValidation.status });
+    }
+    normalizedKrwAmount = amountValidation.krwAmount;
+  }
+
 
   const result = await insertBuyOrderForUser({
     storecode: storecode,
@@ -75,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     nickname: nickname,
     usdtAmount: usdtAmount,
-    krwAmount: krwAmount,
+    krwAmount: normalizedKrwAmount,
     rate: rate,
     privateSale: privateSale,
     buyer: buyer,
