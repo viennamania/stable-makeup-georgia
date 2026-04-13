@@ -11,7 +11,10 @@ import {
   getRequestIp,
 } from "@/lib/server/user-read-security";
 import { insertPublicOrderApiCallLog } from "@/lib/api/publicOrderApiCallLog";
-import { validateBuyOrderStoreAvailability } from "@/lib/server/buy-order-store-validation";
+import {
+  validateBuyOrderStoreAvailability,
+  validateBuyOrderStorePaymentAmount,
+} from "@/lib/server/buy-order-store-validation";
 
 const ROUTE = "/api/order/setBuyOrder";
 
@@ -101,6 +104,28 @@ export async function POST(request: NextRequest) {
     }, { status: storeValidation.status });
   }
   const resolvedStorecode = storeValidation.storecode;
+  const amountValidation = validateBuyOrderStorePaymentAmount({
+    store: storeValidation.store,
+    krwAmountRaw: krwAmount,
+  });
+  if (!amountValidation.ok) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload: body,
+      status: "error",
+      reason: amountValidation.reason,
+      resultMeta: {
+        storecode: resolvedStorecode,
+        walletAddress: walletAddress || null,
+        maxPaymentAmountKRW: amountValidation.maxPaymentAmountKRW ?? null,
+      },
+    });
+    return NextResponse.json({
+      result: null,
+      error: amountValidation.error,
+    }, { status: amountValidation.status });
+  }
+  const normalizedKrwAmount = amountValidation.krwAmount;
 
   const existingBuyOrder = await getBlockingBuyOrderByStorecodeAndWalletAddress({
     storecode: resolvedStorecode,
@@ -164,7 +189,7 @@ export async function POST(request: NextRequest) {
     nickname: nickname,
     mobile: mobile,
     usdtAmount: usdtAmount,
-    krwAmount: krwAmount,
+    krwAmount: normalizedKrwAmount,
     rate: rate,
     privateSale: privateSale,
     buyer: buyer,
