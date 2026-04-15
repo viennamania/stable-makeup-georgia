@@ -434,7 +434,10 @@ export async function insertOne(data: any) {
 
   console.log('depositBankAccountNumber: ' + depositBankAccountNumber);
 
-  const depositBankName = buyer.depositBankName;
+  const depositBankName =
+    typeof buyer.depositBankName === 'string'
+      ? buyer.depositBankName.trim()
+      : '';
   const depositName = buyer.depositName;
   const createdByApi = typeof data.createdByApi === 'string' && data.createdByApi.trim()
     ? data.createdByApi.trim()

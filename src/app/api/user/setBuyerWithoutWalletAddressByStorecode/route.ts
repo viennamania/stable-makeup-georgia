@@ -128,6 +128,8 @@ export async function POST(request: NextRequest) {
     userName: normalizedInput.userName,
     userBankName: normalizedInput.userBankName,
     userBankAccountNumber: normalizedInput.userBankAccountNumber,
+  }, {
+    requireBankName: false,
   });
 
   if (validationError) {
