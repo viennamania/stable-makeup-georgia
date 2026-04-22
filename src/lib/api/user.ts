@@ -418,16 +418,9 @@ export async function insertOne(data: any) {
 
   const buyer = data?.buyer || {};
 
-  let depositBankAccountNumber = buyer.depositBankAccountNumber;
-
-
+  let depositBankAccountNumber = '';
   if (buyer.depositBankAccountNumber) {
-    depositBankAccountNumber = buyer.depositBankAccountNumber.replace(/[^0-9]/g, '');
-  } else {
-    return {
-      result: null,
-      error: 'depositBankAccountNumber is required',
-    }
+    depositBankAccountNumber = String(buyer.depositBankAccountNumber).replace(/[^0-9]/g, '');
   }
 
   
@@ -586,21 +579,23 @@ export async function insertOne(data: any) {
 
     // check buyer.depositBankAccountNumber is exist bankusers collection
     // if exist, skip insert
-    const bankUsersCollection = client.db(dbName).collection('bankusers');
-    const checkBankUser = await bankUsersCollection.findOne(
-      {
-        bankAccountNumber: depositBankAccountNumber,
-      }
-    );
-
-    if (!checkBankUser) {
-      await bankUsersCollection.insertOne(
+    if (depositBankAccountNumber) {
+      const bankUsersCollection = client.db(dbName).collection('bankusers');
+      const checkBankUser = await bankUsersCollection.findOne(
         {
           bankAccountNumber: depositBankAccountNumber,
-          bankName: depositBankName,
-          accountHolder: depositName,
         }
       );
+
+      if (!checkBankUser) {
+        await bankUsersCollection.insertOne(
+          {
+            bankAccountNumber: depositBankAccountNumber,
+            bankName: depositBankName,
+            accountHolder: depositName,
+          }
+        );
+      }
     }
     
 

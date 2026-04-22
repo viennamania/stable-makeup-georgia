@@ -128,6 +128,9 @@ export async function POST(request: NextRequest) {
     userName: normalizedInput.userName,
     userBankName: normalizedInput.userBankName,
     userBankAccountNumber: normalizedInput.userBankAccountNumber,
+  }, {
+    requireBankName: false,
+    requireBankAccountNumber: false,
   });
 
   if (validationError) {
@@ -159,8 +162,8 @@ export async function POST(request: NextRequest) {
   "김성종"
   */
   const buyer = {
-    depositBankName: normalizedInput.userBankName,
-    depositBankAccountNumber: normalizedInput.userBankAccountNumber,
+    depositBankName: normalizedInput.userBankName || "",
+    depositBankAccountNumber: normalizedInput.userBankAccountNumber || "",
     depositName: normalizedInput.userName,
   };
 

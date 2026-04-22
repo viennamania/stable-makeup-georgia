@@ -81,7 +81,13 @@ export const validateBuyerRegistrationInput = ({
   userName: unknown;
   userBankName: unknown;
   userBankAccountNumber: unknown;
-}): string | null => {
+}, {
+  requireBankName = true,
+  requireBankAccountNumber = true,
+}: {
+  requireBankName?: boolean;
+  requireBankAccountNumber?: boolean;
+} = {}): string | null => {
   const nicknameError = validateNicknameForCreation(nickname);
   if (nicknameError) {
     return nicknameError;
@@ -102,19 +108,26 @@ export const validateBuyerRegistrationInput = ({
 
   const safeUserBankName = normalizeText(userBankName);
   if (!safeUserBankName) {
-    return "은행명은 필수입니다.";
+    if (requireBankName) {
+      return "은행명은 필수입니다.";
+    }
+  } else {
+    if (safeUserBankName.length < 2 || safeUserBankName.length > 60) {
+      return "은행명 길이가 올바르지 않습니다.";
+    }
+
+    if (hasUnsafeText(safeUserBankName) || !HUMAN_LABEL_PATTERN.test(safeUserBankName)) {
+      return "유효하지 않은 은행명입니다.";
+    }
   }
 
-  if (safeUserBankName.length < 2 || safeUserBankName.length > 60) {
-    return "은행명 길이가 올바르지 않습니다.";
-  }
-
-  if (hasUnsafeText(safeUserBankName) || !HUMAN_LABEL_PATTERN.test(safeUserBankName)) {
-    return "유효하지 않은 은행명입니다.";
-  }
-
-  const bankAccountDigits = String(userBankAccountNumber || "").replace(/[^0-9]/g, "");
-  if (bankAccountDigits.length < 1 || bankAccountDigits.length > 30) {
+  const safeUserBankAccountNumber = normalizeText(userBankAccountNumber);
+  const bankAccountDigits = safeUserBankAccountNumber.replace(/[^0-9]/g, "");
+  if (!safeUserBankAccountNumber) {
+    if (requireBankAccountNumber) {
+      return "유효하지 않은 계좌번호입니다.";
+    }
+  } else if (bankAccountDigits.length < 1 || bankAccountDigits.length > 30) {
     return "유효하지 않은 계좌번호입니다.";
   }
 
