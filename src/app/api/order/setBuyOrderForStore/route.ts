@@ -75,6 +75,43 @@ const normalizeOptionalString = (value: unknown): string => {
   return value.trim();
 };
 
+const normalizeAccountNumber = (value: unknown): string => {
+  return normalizeOptionalString(value).replace(/[^0-9]/g, "");
+};
+
+function buildBuyerForOrder({
+  existingBuyer,
+  payload,
+}: {
+  existingBuyer: any;
+  payload: Record<string, any>;
+}) {
+  const depositName =
+    normalizeOptionalString(payload.depositorName)
+    || normalizeOptionalString(payload.depositName)
+    || normalizeOptionalString(payload.accountHolder);
+  const depositBankName =
+    normalizeOptionalString(payload.depositBankName)
+    || normalizeOptionalString(payload.bankName);
+  const depositBankAccountNumber =
+    normalizeAccountNumber(payload.depositBankAccountNumber)
+    || normalizeAccountNumber(payload.accountNumber);
+  const buyerOverrides = {
+    ...(depositBankName ? { depositBankName } : {}),
+    ...(depositBankAccountNumber ? { depositBankAccountNumber } : {}),
+    ...(depositName ? { depositName } : {}),
+  };
+
+  if (Object.keys(buyerOverrides).length === 0) {
+    return existingBuyer || null;
+  }
+
+  return {
+    ...(existingBuyer || {}),
+    ...buyerOverrides,
+  };
+}
+
 async function writePublicOrderApiCallLog({
   request,
   payload,
@@ -383,6 +420,10 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
     walletAddress,
     buyer,
   } = userInfo;
+  const buyerForOrder = buildBuyerForOrder({
+    existingBuyer: buyer,
+    payload,
+  });
 
 
   if (!walletAddress) {
@@ -482,7 +523,7 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
     krwAmount: krwAmount,
     rate: rate,
     privateSale: privateSale,
-    buyer: buyer,
+    buyer: buyerForOrder,
     paymentMethod: paymentMethod,
     escrowWallet,
     returnUrl: returnUrl,
