@@ -429,7 +429,7 @@ export default function Index({ params, isYear2025 = false }: any) {
   const paramSearchStoreBankAccountNumber = searchParams.get('searchStoreBankAccountNumber') || "";
   const paramSearchTradeId = searchParams.get('searchTradeId') || "";
 
-  const paramSearchSellerBankAccountNumber = searchParams.get('searchBuyerBankAccountNumber') || "";
+  const paramSearchBuyerBankAccountNumber = searchParams.get('searchBuyerBankAccountNumber') || "";
   const paramSearchDepositCompleted = searchParams.get('searchDepositCompleted') === 'true';
 
 
@@ -1189,19 +1189,34 @@ export default function Index({ params, isYear2025 = false }: any) {
   }, [searchParamsStorecode]);
   
   
-  const [searchTradeId, setSearchTradeId] = useState("");
+  const [searchTradeId, setSearchTradeId] = useState(paramSearchTradeId);
+  useEffect(() => {
+    setSearchTradeId(paramSearchTradeId);
+  }, [paramSearchTradeId]);
 
 
-  const [searchBuyer, setSearchBuyer] = useState("");
+  const [searchBuyer, setSearchBuyer] = useState(paramSearchBuyer);
+  useEffect(() => {
+    setSearchBuyer(paramSearchBuyer);
+  }, [paramSearchBuyer]);
 
-  const [searchDepositName, setSearchDepositName] = useState("");
+  const [searchDepositName, setSearchDepositName] = useState(paramSearchDepositName);
+  useEffect(() => {
+    setSearchDepositName(paramSearchDepositName);
+  }, [paramSearchDepositName]);
 
 
   // search store bank account number
-  const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState("");
+  const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState(paramSearchStoreBankAccountNumber);
+  useEffect(() => {
+    setSearchStoreBankAccountNumber(paramSearchStoreBankAccountNumber);
+  }, [paramSearchStoreBankAccountNumber]);
 
   // search seller bank account number
-  const [searchBuyerBankAccountNumber, setSearchBuyerBankAccountNumber] = useState("");
+  const [searchBuyerBankAccountNumber, setSearchBuyerBankAccountNumber] = useState(paramSearchBuyerBankAccountNumber);
+  useEffect(() => {
+    setSearchBuyerBankAccountNumber(paramSearchBuyerBankAccountNumber);
+  }, [paramSearchBuyerBankAccountNumber]);
   const [searchDepositCompleted, setSearchDepositCompleted] = useState(paramSearchDepositCompleted);
 
   useEffect(() => {
@@ -4021,22 +4036,22 @@ export default function Index({ params, isYear2025 = false }: any) {
 
 
               {/* 검색 버튼 */}
-              {/*
-              <div className="
-              w-32
-              flex flex-row items-center gap-2">
+              <div className="flex w-full flex-row items-center gap-2">
                 <button
                   onClick={() => {
-                    setPageValue(1);
-                    
-                    fetchBuyOrders();
-
-                    getTradeSummary();
+                    router.push(buildHistoryQuery({
+                      page: 1,
+                      searchTradeId,
+                      searchBuyer,
+                      searchDepositName,
+                      searchStoreBankAccountNumber,
+                      searchBuyerBankAccountNumber,
+                    }));
                   }}
-                  className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
+                  className="w-full rounded-xl bg-[#3167b4] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2b5a9e] disabled:cursor-not-allowed disabled:bg-zinc-300"
                   disabled={fetchingBuyOrders}
                 >
-                  <div className="flex flex-row items-center justify-between gap-2">
+                  <div className="flex flex-row items-center justify-center gap-2">
                     <Image
                       src="/icon-search.png"
                       alt="Search"
@@ -4051,7 +4066,6 @@ export default function Index({ params, isYear2025 = false }: any) {
 
                 </button>
               </div>
-              */}
 
             </div>
 
