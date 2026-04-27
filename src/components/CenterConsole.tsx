@@ -121,6 +121,9 @@ const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mu
 const CenterConsole = () => {
 
   const router = useRouter();
+  const pathname = usePathname();
+  const isAdminConsolePath = pathname?.includes("/admin") ?? false;
+  const currentLang = pathname?.split("/").filter(Boolean)[0] || "ko";
 
 
   /*
@@ -557,7 +560,11 @@ const CenterConsole = () => {
                   className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
                   onClick={() => {
 
-                    router.push('/ko/withdraw-usdt');
+                    router.push(
+                      isAdminConsolePath
+                        ? `/${currentLang}/admin/withdraw-usdt`
+                        : `/${currentLang}/withdraw-usdt`
+                    );
 
                   }}
                 >
