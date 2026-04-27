@@ -29,7 +29,7 @@ const GET_ALL_BUY_ORDERS_ROUTE_TIMEOUT_MS = Number.parseInt(
   10,
 ) > 0
   ? Number.parseInt(process.env.GET_ALL_BUY_ORDERS_ROUTE_TIMEOUT_MS || "", 10)
-  : 12000;
+  : 20000;
 const GET_ALL_BUY_ORDERS_DEFAULT_LIMIT = Number.parseInt(
   process.env.GET_ALL_BUY_ORDERS_DEFAULT_LIMIT || "",
   10,

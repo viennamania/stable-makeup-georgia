@@ -27,11 +27,11 @@ const options: MongoClientOptions = {
   connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 10000),
   socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 15000),
   // Vercel serverless workers multiply pools per route and instance, so keep defaults conservative.
-  // `2` was too restrictive for concurrent read-heavy endpoints; use a moderate default.
-  maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 4),
+  // Admin P2P history can run several read aggregations for one request; `4` is too tight under load.
+  maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 10),
   minPoolSize: 0,
   maxConnecting: Number(process.env.MONGODB_MAX_CONNECTING || 2),
-  waitQueueTimeoutMS: Number(process.env.MONGODB_WAIT_QUEUE_TIMEOUT_MS || 3000),
+  waitQueueTimeoutMS: Number(process.env.MONGODB_WAIT_QUEUE_TIMEOUT_MS || 10000),
   maxIdleTimeMS: Number(process.env.MONGODB_MAX_IDLE_TIME_MS || 10000),
   family: mongoIpFamily,
   readPreference: mongoReadPreference,
