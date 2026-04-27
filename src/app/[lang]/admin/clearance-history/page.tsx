@@ -4049,7 +4049,6 @@ export default function Index({ params, isYear2025 = false }: any) {
                     }));
                   }}
                   className="w-full rounded-xl bg-[#3167b4] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2b5a9e] disabled:cursor-not-allowed disabled:bg-zinc-300"
-                  disabled={fetchingBuyOrders}
                 >
                   <div className="flex flex-row items-center justify-center gap-2">
                     <Image
@@ -4060,7 +4059,7 @@ export default function Index({ params, isYear2025 = false }: any) {
                       className="rounded-lg w-5 h-5"
                     />
                     <span className="text-sm">
-                      {fetchingBuyOrders ? '검색중...' : '검색'}
+                        검색
                     </span>
                   </div>
 
