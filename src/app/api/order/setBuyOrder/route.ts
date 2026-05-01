@@ -4,6 +4,10 @@ import {
 	insertBuyOrder,
   getBlockingBuyOrderByStorecodeAndWalletAddress,
 } from '@lib/api/order';
+import {
+  getOneByWalletAddress,
+  getUserByNickname,
+} from '@lib/api/user';
 import { chain } from "@/app/config/contractAddresses";
 import { createBuyOrderEscrowWallet } from "@/lib/server/buy-order-escrow-wallet";
 import {
@@ -17,6 +21,184 @@ import {
 } from "@/lib/server/buy-order-store-validation";
 
 const ROUTE = "/api/order/setBuyOrder";
+
+function normalizeText(value: unknown): string {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" || typeof value === "bigint") {
+    return String(value).trim();
+  }
+
+  return "";
+}
+
+function normalizeWallet(value: unknown): string {
+  return normalizeText(value).toLowerCase();
+}
+
+function normalizeAccountNumber(value: unknown): string {
+  return normalizeText(value).replace(/[^0-9]/g, "");
+}
+
+function buyerHasSubmittedBankInfo(buyer: unknown): boolean {
+  if (!buyer || typeof buyer !== "object" || Array.isArray(buyer)) {
+    return false;
+  }
+
+  const buyerRecord = buyer as Record<string, unknown>;
+  return Boolean(
+    normalizeText(buyerRecord.depositName)
+      || normalizeText(buyerRecord.depositBankName)
+      || normalizeText(buyerRecord.depositBankAccountNumber)
+  );
+}
+
+async function validateBuyOrderBuyerSnapshot({
+  storecode,
+  walletAddress,
+  nickname,
+  buyer,
+}: {
+  storecode: string;
+  walletAddress: unknown;
+  nickname: unknown;
+  buyer: unknown;
+}): Promise<{
+  ok: boolean;
+  status?: number;
+  reason?: string;
+  error?: string;
+  resultMeta?: Record<string, unknown>;
+}> {
+  const safeStorecode = normalizeText(storecode);
+  const safeWalletAddress = normalizeText(walletAddress);
+  const safeNickname = normalizeText(nickname);
+
+  if (!safeStorecode || (!safeWalletAddress && !safeNickname)) {
+    return { ok: true };
+  }
+
+  const [walletUser, nicknameUser] = await Promise.all([
+    safeWalletAddress
+      ? getOneByWalletAddress(safeStorecode, safeWalletAddress)
+      : Promise.resolve(null),
+    safeNickname
+      ? getUserByNickname(safeStorecode, safeNickname)
+      : Promise.resolve(null),
+  ]);
+
+  if (walletUser && safeNickname && normalizeText(walletUser.nickname) !== safeNickname) {
+    return {
+      ok: false,
+      status: 409,
+      reason: "buyer_member_wallet_nickname_mismatch",
+      error: "회원 아이디와 지갑 주소가 일치하지 않습니다.",
+      resultMeta: {
+        storecode: safeStorecode,
+        requestNickname: safeNickname,
+        registeredNickname: walletUser.nickname || null,
+        walletAddress: safeWalletAddress,
+      },
+    };
+  }
+
+  if (
+    nicknameUser?.walletAddress
+    && safeWalletAddress
+    && normalizeWallet(nicknameUser.walletAddress) !== normalizeWallet(safeWalletAddress)
+  ) {
+    return {
+      ok: false,
+      status: 409,
+      reason: "buyer_member_nickname_wallet_mismatch",
+      error: "회원 아이디와 지갑 주소가 일치하지 않습니다.",
+      resultMeta: {
+        storecode: safeStorecode,
+        requestNickname: safeNickname,
+        requestWalletAddress: safeWalletAddress,
+        registeredWalletAddress: nicknameUser.walletAddress || null,
+      },
+    };
+  }
+
+  const registeredUser = nicknameUser || walletUser;
+  if (!registeredUser || !buyerHasSubmittedBankInfo(buyer)) {
+    return { ok: true };
+  }
+
+  const buyerRecord = buyer as Record<string, unknown>;
+  const registeredBuyer = registeredUser.buyer || {};
+
+  const requestedDepositName = normalizeText(buyerRecord.depositName);
+  const registeredDepositName = normalizeText(registeredBuyer.depositName);
+  if (
+    requestedDepositName
+    && registeredDepositName
+    && requestedDepositName !== registeredDepositName
+  ) {
+    return {
+      ok: false,
+      status: 409,
+      reason: "buyer_deposit_name_mismatch",
+      error: "주문 입금자명이 등록된 회원 입금자명과 일치하지 않습니다.",
+      resultMeta: {
+        storecode: safeStorecode,
+        nickname: registeredUser.nickname || safeNickname || null,
+        walletAddress: registeredUser.walletAddress || safeWalletAddress || null,
+        requestedDepositName,
+        registeredDepositName,
+      },
+    };
+  }
+
+  const requestedBankName = normalizeText(buyerRecord.depositBankName);
+  const registeredBankName = normalizeText(registeredBuyer.depositBankName);
+  if (
+    requestedBankName
+    && registeredBankName
+    && requestedBankName !== registeredBankName
+  ) {
+    return {
+      ok: false,
+      status: 409,
+      reason: "buyer_deposit_bank_name_mismatch",
+      error: "주문 입금 은행명이 등록된 회원 은행명과 일치하지 않습니다.",
+      resultMeta: {
+        storecode: safeStorecode,
+        nickname: registeredUser.nickname || safeNickname || null,
+        walletAddress: registeredUser.walletAddress || safeWalletAddress || null,
+        requestedBankName,
+        registeredBankName,
+      },
+    };
+  }
+
+  const requestedAccountNumber = normalizeAccountNumber(buyerRecord.depositBankAccountNumber);
+  const registeredAccountNumber = normalizeAccountNumber(
+    registeredBuyer.depositBankAccountNumber,
+  );
+  if (
+    requestedAccountNumber
+    && registeredAccountNumber
+    && requestedAccountNumber !== registeredAccountNumber
+  ) {
+    return {
+      ok: false,
+      status: 409,
+      reason: "buyer_deposit_bank_account_mismatch",
+      error: "주문 입금 계좌번호가 등록된 회원 계좌번호와 일치하지 않습니다.",
+      resultMeta: {
+        storecode: safeStorecode,
+        nickname: registeredUser.nickname || safeNickname || null,
+        walletAddress: registeredUser.walletAddress || safeWalletAddress || null,
+      },
+    };
+  }
+
+  return { ok: true };
+}
 
 async function writePublicOrderApiCallLog({
   request,
@@ -126,6 +308,33 @@ export async function POST(request: NextRequest) {
     }, { status: amountValidation.status });
   }
   const normalizedKrwAmount = amountValidation.krwAmount;
+
+  const buyerSnapshotValidation = await validateBuyOrderBuyerSnapshot({
+    storecode: resolvedStorecode,
+    walletAddress,
+    nickname,
+    buyer,
+  });
+  if (!buyerSnapshotValidation.ok) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload: body,
+      status: "error",
+      reason: buyerSnapshotValidation.reason,
+      resultMeta: buyerSnapshotValidation.resultMeta || {
+        storecode: resolvedStorecode,
+        walletAddress: walletAddress || null,
+        nickname: nickname || null,
+      },
+    });
+    return NextResponse.json(
+      {
+        result: null,
+        error: buyerSnapshotValidation.error || "Buyer information does not match registered member",
+      },
+      { status: buyerSnapshotValidation.status || 409 }
+    );
+  }
 
   const existingBuyOrder = await getBlockingBuyOrderByStorecodeAndWalletAddress({
     storecode: resolvedStorecode,
