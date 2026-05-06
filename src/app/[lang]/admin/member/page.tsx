@@ -159,10 +159,10 @@ const wallets = [
     }),
   ];
 
-const CANCEL_PAYMENT_REQUESTED_BUYORDER_ROUTE =
-  "/api/admin/member/cancelPaymentRequestedBuyOrder";
-const CANCEL_PAYMENT_REQUESTED_BUYORDER_SIGNING_PREFIX =
-  "stable-georgia:admin-member-cancel-payment-requested-buy-order:v1";
+const CONFIRM_BUYORDER_PAYMENT_ROUTE =
+  "/api/admin/member/confirmBuyOrderPayment";
+const CONFIRM_BUYORDER_PAYMENT_SIGNING_PREFIX =
+  "stable-georgia:admin-member-confirm-buy-order-payment:v1";
   
 
 
@@ -1098,12 +1098,15 @@ export default function Index({ params }: any) {
       const nextTarget = latestTarget || item;
       const nextStatus = String(nextTarget?.buyOrderStatus || '').trim();
 
-      if (nextStatus !== 'paymentRequested') {
+      if (nextStatus === 'paymentConfirmed') {
         toast.error(
-          nextStatus
-            ? `최신 주문상태는 ${getBuyOrderStatusLabel(nextStatus) || nextStatus}입니다.`
-            : '이 회원의 활성 구매주문을 찾지 못했습니다.',
+          `최신 주문상태는 ${getBuyOrderStatusLabel(nextStatus) || nextStatus}입니다.`,
         );
+        return;
+      }
+
+      if (!nextStatus) {
+        toast.error('이 회원의 구매주문을 찾지 못했습니다.');
         return;
       }
 
@@ -1114,7 +1117,7 @@ export default function Index({ params }: any) {
     }
   };
 
-  const cancelPaymentRequestedBuyOrder = async () => {
+  const confirmMemberBuyOrderPayment = async () => {
     if (updatingBuyOrderStatus) {
       return;
     }
@@ -1137,14 +1140,13 @@ export default function Index({ params }: any) {
     try {
       const response = await postAdminSignedJson({
         account: activeAccount,
-        route: CANCEL_PAYMENT_REQUESTED_BUYORDER_ROUTE,
-        signingPrefix: CANCEL_PAYMENT_REQUESTED_BUYORDER_SIGNING_PREFIX,
+        route: CONFIRM_BUYORDER_PAYMENT_ROUTE,
+        signingPrefix: CONFIRM_BUYORDER_PAYMENT_SIGNING_PREFIX,
         requesterStorecode: 'admin',
         requesterWalletAddress: activeAccount.address,
         body: {
           storecode: targetStorecode,
           walletAddress: targetWalletAddress,
-          cancelTradeReason: '관리자 회원페이지 상태변경',
         },
       });
 
@@ -1179,12 +1181,12 @@ export default function Index({ params }: any) {
           }
           return {
             ...item,
-            buyOrderStatus: 'cancelled',
+            buyOrderStatus: 'paymentConfirmed',
           };
         })
       );
 
-      toast.success('주문상태를 거래취소로 변경했습니다.');
+      toast.success('주문상태를 결제완료로 변경했습니다.');
       setStatusChangeModalOpen(false);
       setStatusChangeTarget(null);
       await fetchAllBuyer();
@@ -2598,7 +2600,7 @@ export default function Index({ params }: any) {
                                 {getBuyOrderStatusLabel(item?.buyOrderStatus || '')}
                               </span>
 
-                              {item?.buyOrderStatus === 'paymentRequested' && (
+                              {item?.buyOrderStatus && item?.buyOrderStatus !== 'paymentConfirmed' && (
                                 <button
                                   disabled={!isAdmin || updatingBuyOrderStatus || openingStatusChangeModal}
                                   onClick={() => {
@@ -2607,7 +2609,7 @@ export default function Index({ params }: any) {
                                   className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition ${
                                     !isAdmin || updatingBuyOrderStatus || openingStatusChangeModal
                                       ? 'cursor-not-allowed bg-slate-300'
-                                      : 'bg-rose-500 hover:bg-rose-600'
+                                      : 'bg-emerald-500 hover:bg-emerald-600'
                                   }`}
                                 >
                                   {openingStatusChangeModal ? '확인 중...' : '상태변경하기'}
@@ -2752,10 +2754,10 @@ export default function Index({ params }: any) {
               <div className="flex flex-col">
                 <div className="text-[22px] font-bold text-slate-900">주문상태 변경</div>
                 <div className="text-xs text-slate-500 mt-1">
-                  현재 결제요청 상태의 주문을 거래취소로 변경합니다.
+                  현재 주문상태를 확인하고 결제완료로 변경합니다.
                 </div>
               </div>
-              <span className="inline-flex items-center rounded-full bg-rose-50 px-3 py-1 text-[11px] font-bold text-rose-600 border border-rose-200">
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-600 border border-emerald-200">
                 admin only
               </span>
             </div>
@@ -2777,13 +2779,13 @@ export default function Index({ params }: any) {
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-500">현재상태</span>
-                <span className="font-semibold text-rose-500">
+                <span className={`font-semibold ${getBuyOrderStatusTextClass(statusChangeTarget?.buyOrderStatus || '')}`}>
                   {getBuyOrderStatusLabel(statusChangeTarget?.buyOrderStatus || '') || '-'}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-500">변경상태</span>
-                <span className="font-semibold text-slate-900">거래취소 cancelled</span>
+                <span className="font-semibold text-emerald-600">결제완료 paymentConfirmed</span>
               </div>
             </div>
 
@@ -2796,15 +2798,15 @@ export default function Index({ params }: any) {
                 닫기
               </button>
               <button
-                disabled={updatingBuyOrderStatus || statusChangeTarget?.buyOrderStatus !== 'paymentRequested'}
-                onClick={cancelPaymentRequestedBuyOrder}
+                disabled={updatingBuyOrderStatus || !statusChangeTarget?.buyOrderStatus || statusChangeTarget?.buyOrderStatus === 'paymentConfirmed'}
+                onClick={confirmMemberBuyOrderPayment}
                 className={`px-5 py-2 text-sm font-semibold text-white rounded-xl shadow-md ${
-                  updatingBuyOrderStatus || statusChangeTarget?.buyOrderStatus !== 'paymentRequested'
+                  updatingBuyOrderStatus || !statusChangeTarget?.buyOrderStatus || statusChangeTarget?.buyOrderStatus === 'paymentConfirmed'
                     ? 'cursor-not-allowed bg-slate-300'
-                    : 'bg-gradient-to-r from-rose-500 to-red-600 hover:shadow-lg'
+                    : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:shadow-lg'
                 }`}
               >
-                {updatingBuyOrderStatus ? '변경 중...' : 'cancelled 로 변경'}
+                {updatingBuyOrderStatus ? '변경 중...' : '결제완료로 변경'}
               </button>
             </div>
           </div>

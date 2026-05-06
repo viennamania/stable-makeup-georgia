@@ -5777,6 +5777,22 @@ export async function buyOrderConfirmPayment(data: any) {
 
   const autoConfirmPayment = data.autoConfirmPayment;
   const paymentConfirmedAt = new Date().toISOString();
+  const allowedCurrentStatuses: string[] = Array.isArray(data.allowedCurrentStatuses)
+    ? Array.from(
+        new Set<string>(
+          data.allowedCurrentStatuses
+            .map((status: unknown) => String(status || "").trim())
+            .filter((status: string) => status && status !== "paymentConfirmed"),
+        ),
+      )
+    : ["paymentRequested"];
+  const statusFilter =
+    allowedCurrentStatuses.length === 1
+      ? allowedCurrentStatuses[0]
+      : { $in: allowedCurrentStatuses };
+  const statusFromForEvent =
+    String(data.statusFrom || "").trim()
+    || (allowedCurrentStatuses.length === 1 ? allowedCurrentStatuses[0] : "paymentRequested");
   const normalizedPaymentConfirmedBy =
     data.paymentConfirmedBy && typeof data.paymentConfirmedBy === "object" && !Array.isArray(data.paymentConfirmedBy)
       ? {
@@ -5843,7 +5859,7 @@ export async function buyOrderConfirmPayment(data: any) {
     result = await collection.updateOne(
       {
         _id: new ObjectId(data.orderId+''),
-        status: 'paymentRequested',
+        status: statusFilter,
       },
       { $set: updateFields }
     );
@@ -6256,7 +6272,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
     await emitBuyOrderStatusRealtimeEvent({
       source: "order.buyOrderConfirmPayment",
-      statusFrom: "paymentRequested",
+      statusFrom: statusFromForEvent,
       statusTo: "paymentConfirmed",
       order: confirmedOrder,
       idempotencyParts: [
