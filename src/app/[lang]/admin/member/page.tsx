@@ -163,6 +163,11 @@ const CONFIRM_BUYORDER_PAYMENT_ROUTE =
   "/api/admin/member/confirmBuyOrderPayment";
 const CONFIRM_BUYORDER_PAYMENT_SIGNING_PREFIX =
   "stable-georgia:admin-member-confirm-buy-order-payment:v1";
+const ALL_STORES_OPTION = {
+  storecode: "",
+  storeName: "전체 가맹점",
+  storeLogo: "/icon-store.png",
+};
   
 
 
@@ -1615,6 +1620,7 @@ export default function Index({ params }: any) {
   const selectedStore = useMemo(
     () => allStores.find((s: any) => s.storecode === selectedStorecode)
       || allStores.find((s: any) => s.storecode === "")
+      || (!selectedStorecode ? ALL_STORES_OPTION : null)
       || allStores[0]
       || null,
     [allStores, selectedStorecode],
@@ -1646,11 +1652,7 @@ export default function Index({ params }: any) {
     const data = await response.json();
     const sorted = (data.result.stores || []).slice().sort((a: any, b: any) => (b.storeName || "").localeCompare(a.storeName || "", "ko-KR"));
     const storeList = [
-      {
-        storecode: "",
-        storeName: "전체",
-        storeLogo: "/icon-store.png",
-      },
+      ALL_STORES_OPTION,
       ...sorted,
     ];
     setAllStores(storeList);
@@ -2089,9 +2091,11 @@ export default function Index({ params }: any) {
                         className="w-7 h-7 rounded-md object-cover border border-slate-200"
                       />
                       <div className="flex flex-col text-left min-w-0">
-                        <span className="truncate">{selectedStore?.storeName || "가맹점 없음"}</span>
+                        <span className="truncate">
+                          {selectedStore?.storeName || (selectedStorecode ? "가맹점 없음" : "전체 가맹점")}
+                        </span>
                         <span className="text-[11px] text-slate-500 truncate">
-                          {selectedStore?.storecode === "" ? "전체" : (selectedStore?.storecode || "")}
+                          {selectedStore?.storecode === "" ? "전체 가맹점" : (selectedStore?.storecode || "")}
                         </span>
                       </div>
                     </div>
@@ -2125,7 +2129,7 @@ export default function Index({ params }: any) {
                           <div className="flex flex-col text-left">
                             <span className="text-sm font-semibold text-slate-800">{item.storeName}</span>
                             <span className="text-[11px] text-slate-500">
-                              {item.storecode === "" ? "전체" : item.storecode}
+                              {item.storecode === "" ? "전체 가맹점" : item.storecode}
                             </span>
                           </div>
                         </button>
