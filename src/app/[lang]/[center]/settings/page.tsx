@@ -516,7 +516,7 @@ export default function SettingsPage({ params }: any) {
         }
         if (editedNickname.length < 2 || editedNickname.length > 10) {
 
-            toast.error("가맹점 이름을 2자 이상 10자 이하로 설정하세요");
+            toast.error("상점 이름을 2자 이상 10자 이하로 설정하세요");
             return;
         }
 
@@ -535,12 +535,12 @@ export default function SettingsPage({ params }: any) {
         const data = await response.json();
         //console.log("data", data);
         if (data.result) {
-            toast.success('가맹점 이름이 설정되었습니다');
+            toast.success('상점 이름이 설정되었습니다');
             setNickname(editedNickname);
             setNicknameEdit(false);
             setEditedNickname('');
         } else {
-            toast.error('가맹점 이름 설정에 실패하였습니다');
+            toast.error('상점 이름 설정에 실패하였습니다');
         }
     }
 
@@ -559,7 +559,7 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         if (storeDescription.length < 2 || storeDescription.length > 100) {
-            toast.error("가맹점 설명을 2자 이상 100자 이하로 설정하세요");
+            toast.error("상점 설명을 2자 이상 100자 이하로 설정하세요");
             return;
         }
         const response = await postCenterStoreAdminSignedJson({
@@ -579,10 +579,10 @@ export default function SettingsPage({ params }: any) {
         //console.log("data", data);
 
         if (data.result) {
-            toast.success('가맹점 설명이 설정되었습니다');
+            toast.success('상점 설명이 설정되었습니다');
             setStoreDescription(storeDescription);
         } else {
-            toast.error('가맹점 설명 설정에 실패하였습니다');
+            toast.error('상점 설명 설정에 실패하였습니다');
         }
     }
 
@@ -631,7 +631,7 @@ export default function SettingsPage({ params }: any) {
         const data = await response.json();
         //console.log("data", data);
         if (data.result) {
-            toast.success('가맹점 은행 정보가 설정되었습니다');
+            toast.success('상점 은행 정보가 설정되었습니다');
             setBankName('');
             setAccountNumber('');
             setAccountHolder('');
@@ -642,7 +642,7 @@ export default function SettingsPage({ params }: any) {
 
 
         } else {
-            toast.error('가맹점 은행 정보 설정에 실패하였습니다');
+            toast.error('상점 은행 정보 설정에 실패하였습니다');
         }
         setWritingStoreBankInfo(false);
     }
@@ -790,7 +790,7 @@ export default function SettingsPage({ params }: any) {
 
 
     // fetch all seller for store
-    // 가맹점 판매자 검색
+    // 상점 판매자 검색
     const [fetchingAllStoreSellers, setFetchingAllStoreSellers] = useState(false);
     const [allStoreSellers, setAllStoreSellers] = useState([] as any[]);
     const fetchAllStoreSellers = async () => {
@@ -839,7 +839,7 @@ export default function SettingsPage({ params }: any) {
 
 
     // update adminWalletAddress of store
-    // 가맹점 관리자 변경
+    // 상점 관리자 변경
     const [updatingAdminWalletAddress, setUpdatingAdminWalletAddress] = useState(false);
     const [selectedAdminWalletAddress, setSelectedAdminWalletAddress] = useState('');
     const updateAdminWalletAddress = async () => {
@@ -864,20 +864,20 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
         setUpdatingAdminWalletAddress(false);
-        toast.error('가맹점 관리자 변경에 실패했습니다.');
+        toast.error('상점 관리자 변경에 실패했습니다.');
         return;
         }
 
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-        toast.success('가맹점 관리자가 변경되었습니다.');
+        toast.success('상점 관리자가 변경되었습니다.');
         setSelectedAdminWalletAddress('');
 
         fetchStore();
 
         } else {
-        toast.error('가맹점 관리자 변경에 실패했습니다.');
+        toast.error('상점 관리자 변경에 실패했습니다.');
         }
 
         setUpdatingAdminWalletAddress(false);
@@ -890,7 +890,7 @@ export default function SettingsPage({ params }: any) {
 
 
     // update settlementWalletAddress of store
-    // 가맹점 결제지갑 변경
+    // 상점 결제지갑 변경
     const [updatingSettlementWalletAddress, setUpdatingSettlementWalletAddress] = useState(false);
     const [selectedSettlementWalletAddress, setSelectedSettlementWalletAddress] = useState('');
     const updateSettlementWalletAddress = async () => {
@@ -912,20 +912,20 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
         setUpdatingSettlementWalletAddress(false);
-        toast.error('가맹점 자동결제용 USDT지갑 변경에 실패했습니다.');
+        toast.error('상점 자동결제용 USDT지갑 변경에 실패했습니다.');
         return;
         }
 
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-        toast.success('가맹점 자동결제용 USDT지갑이 변경되었습니다.');
+        toast.success('상점 자동결제용 USDT지갑이 변경되었습니다.');
         setSelectedSettlementWalletAddress('');
 
         fetchStore();
 
         } else {
-        toast.error('가맹점 자동결제용 USDT지갑 변경에 실패했습니다.');
+        toast.error('상점 자동결제용 USDT지갑 변경에 실패했습니다.');
         }
 
         setUpdatingSettlementWalletAddress(false);
@@ -936,7 +936,7 @@ export default function SettingsPage({ params }: any) {
 
 
     // update settlementFeeWalletAddress of store
-    // 가맹점 수수료 지갑 변경
+    // 상점 수수료 지갑 변경
     const [updatingSettlementFeeWalletAddress, setUpdatingSettlementFeeWalletAddress] = useState(false);
     const [selectedSettlementFeeWalletAddress, setSelectedSettlementFeeWalletAddress] = useState('');
     const updateSettlementFeeWalletAddress = async () => {
@@ -958,19 +958,19 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
             setUpdatingSettlementFeeWalletAddress(false);
-            toast.error('가맹점 수수료 지갑 변경에 실패했습니다.');
+            toast.error('상점 수수료 지갑 변경에 실패했습니다.');
             return;
         }
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-            toast.success('가맹점 수수료 지갑이 변경되었습니다.');
+            toast.success('상점 수수료 지갑이 변경되었습니다.');
             setSelectedSettlementFeeWalletAddress('');
 
             fetchStore();
 
         } else {
-            toast.error('가맹점 수수료 지갑 변경에 실패했습니다.');
+            toast.error('상점 수수료 지갑 변경에 실패했습니다.');
         }
         setUpdatingSettlementFeeWalletAddress(false);
         return data.result;
@@ -980,7 +980,7 @@ export default function SettingsPage({ params }: any) {
 
     
     // update settlementFeePercent
-    // 가맹점 수수료 비율 변경
+    // 상점 수수료 비율 변경
     const [updatingSettlementFeePercent, setUpdatingSettlementFeePercent] = useState(false);
     const [settlementFeePercent, setSettlementFeePercent] = useState(store?.settlementFeePercent || 0.0);
     const updateSettlementFeePercent = async () => {
@@ -1002,19 +1002,19 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
             setUpdatingSettlementFeePercent(false);
-            toast.error('가맹점 수수료 비율 변경에 실패했습니다.');
+            toast.error('상점 수수료 비율 변경에 실패했습니다.');
             return;
         }
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-            toast.success('가맹점 수수료 비율이 변경되었습니다.');
+            toast.success('상점 수수료 비율이 변경되었습니다.');
             setSettlementFeePercent(0);
 
             fetchStore();
 
         } else {
-            toast.error('가맹점 수수료 비율 변경에 실패했습니다.');
+            toast.error('상점 수수료 비율 변경에 실패했습니다.');
         }
         setUpdatingSettlementFeePercent(false);
         return data.result;
@@ -1054,19 +1054,19 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
             setUpdatingSellerWalletAddress(false);
-            toast.error('가맹점 판매자 변경에 실패했습니다.');
+            toast.error('상점 판매자 변경에 실패했습니다.');
             return;
         }
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-            toast.success('가맹점 판매자가 변경되었습니다.');
+            toast.success('상점 판매자가 변경되었습니다.');
             setSelectedSellerWalletAddress('');
 
             fetchStore();
 
         } else {
-            toast.error('가맹점 판매자 변경에 실패했습니다.');
+            toast.error('상점 판매자 변경에 실패했습니다.');
         }
         setUpdatingSellerWalletAddress(false);
         return data.result;
@@ -1307,7 +1307,7 @@ export default function SettingsPage({ params }: any) {
     }
 
     if (!store) {
-        toast.error("가맹점 정보가 없습니다");
+        toast.error("상점 정보가 없습니다");
         return;
     }
 
@@ -1336,7 +1336,7 @@ export default function SettingsPage({ params }: any) {
             viewOnAndOff: viewOnAndOff,
         });
 
-        toast.success(`가맹점 ${viewOnAndOff ? "노출" : "비노출"} 설정이 변경되었습니다.`);
+        toast.success(`상점 ${viewOnAndOff ? "노출" : "비노출"} 설정이 변경되었습니다.`);
 
 
     }
@@ -1415,7 +1415,7 @@ export default function SettingsPage({ params }: any) {
                         />
 
                         <div className="text-xl font-semibold">
-                        가맹점{' '}{
+                        상점{' '}{
                             store && store.storeName + " (" + store.storecode + ")"
                         }{' '}관리
                         </div>
@@ -1439,7 +1439,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        가맹점 이름
+                                        상점 이름
                                     </span>
                                 </div>
 
@@ -1474,7 +1474,7 @@ export default function SettingsPage({ params }: any) {
                                         {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
-                                            {nicknameEdit ? "가맹점 이름 수정" : "가맹점 이름 설정"}
+                                            {nicknameEdit ? "상점 이름 수정" : "상점 이름 설정"}
                                         </span>
                                     </div>
 
@@ -1484,7 +1484,7 @@ export default function SettingsPage({ params }: any) {
                                             <input
                                                 disabled={!address}
                                                 className="p-2 w-64 text-zinc-100 bg-zinc-800 rounded text-xl font-semibold"
-                                                placeholder="가맹점 이름을 입력하세요"
+                                                placeholder="상점 이름을 입력하세요"
                                                 
                                                 //value={nickname}
                                                 value={editedNickname}
@@ -1503,7 +1503,7 @@ export default function SettingsPage({ params }: any) {
                                             />
                                             <div className='flex flex-row gap-2 items-center justify-between'>
                                                 <span className='text-sm font-semibold'>
-                                                    {nicknameEdit ? "가맹점 이름을 수정하세요" : "가맹점 이름을 설정하세요"}
+                                                    {nicknameEdit ? "상점 이름을 수정하세요" : "상점 이름을 설정하세요"}
                                                 </span>
                                             </div>
                                         </div>
@@ -1513,7 +1513,7 @@ export default function SettingsPage({ params }: any) {
                                             className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!editedNickname ? "opacity-50" : ""}`}
                                             onClick={() => {
                                                 if (!editedNickname) {
-                                                    toast.error("가맹점 이름을 입력하세요");
+                                                    toast.error("상점 이름을 입력하세요");
                                                     return;
                                                 }
                                                 setStoreName();
@@ -1543,13 +1543,13 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        가맹점 설명
+                                        상점 설명
                                     </span>
                                 </div>
                                 <input
                                     disabled={!address}
                                     className="bg-[#1f2937] text-zinc-100 rounded-lg p-2 w-full text-sm"
-                                    placeholder="가맹점 설명을 입력하세요"
+                                    placeholder="상점 설명을 입력하세요"
                                     value={storeDescription}
                                     type='text'
                                     onChange={(e) => {
@@ -1561,7 +1561,7 @@ export default function SettingsPage({ params }: any) {
                                     className={`w-32 bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!storeDescription ? "opacity-50" : ""}`}
                                     onClick={() => {
                                         if (!storeDescription) {
-                                            toast.error("가맹점 설명을 입력하세요");
+                                            toast.error("상점 설명을 입력하세요");
                                             return;
                                         }
                                         writeStoreDescription();
@@ -1582,7 +1582,7 @@ export default function SettingsPage({ params }: any) {
                                 {/* dot */}
                                 <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                 <span className="text-lg">
-                                    가맹점 로고
+                                    상점 로고
                                 </span>
                             </div>
 
@@ -1611,7 +1611,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                 />
                                 <span className="text-lg text-zinc-500">
-                                    가맹점 관리자 설정
+                                    상점 관리자 설정
                                 </span>
                             </div>
 
@@ -1650,7 +1650,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 관리자 설정이 되어 있지 않습니다.
+                                    {store && store.storeName}의 상점 관리자 설정이 되어 있지 않습니다.
                                     </span>
                                 </div>
                                 )}
@@ -1675,7 +1675,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingAdminWalletAddress}
                                     >
-                                    <option value="">가맹점 관리자 변경</option>
+                                    <option value="">상점 관리자 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -1687,16 +1687,16 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                     onClick={() => {
                                         if (!selectedAdminWalletAddress) {
-                                        toast.error('가맹점 관리자를 선택하세요.');
+                                        toast.error('상점 관리자를 선택하세요.');
                                         return;
                                         }
                                         if (selectedAdminWalletAddress === store?.adminWalletAddress) {
-                                        toast.error('현재 가맹점 관리자와 동일합니다.');
+                                        toast.error('현재 상점 관리자와 동일합니다.');
                                         return;
                                         }
 
                                         confirm(
-                                        `정말 ${selectedAdminWalletAddress}로 가맹점 관리자를 변경하시겠습니까?`
+                                        `정말 ${selectedAdminWalletAddress}로 상점 관리자를 변경하시겠습니까?`
                                         ) && updateAdminWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -1720,7 +1720,7 @@ export default function SettingsPage({ params }: any) {
                                             <span className="text-sm text-red-500">
                                             {store && store.storeName}의 회원이 없습니다.
                                             <br />
-                                            가맹점 홈페이지에서 회원가입 후 가맹점 관리자를 설정하세요.
+                                            상점 홈페이지에서 회원가입 후 상점 관리자를 설정하세요.
                                             </span>
                                         </div>
 
@@ -1734,7 +1734,7 @@ export default function SettingsPage({ params }: any) {
                                             }}
                                             className="bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg"
                                         >
-                                            가맹점 관리자 홈페이지 열기
+                                            상점 관리자 홈페이지 열기
                                         </button>
 
                                     </div>
@@ -1761,7 +1761,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                 />
                                 <span className="text-lg text-zinc-500">
-                                    가맹점 자동결제용 USDT지갑 설정
+                                    상점 자동결제용 USDT지갑 설정
                                 </span>
                             </div>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
@@ -1796,7 +1796,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-lg text-red-500">
-                                    {store && store.storeName}의 가맹점 자동결제용 USDT지갑이 설정되지 않았습니다.
+                                    {store && store.storeName}의 상점 자동결제용 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -1822,7 +1822,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSettlementWalletAddress}
                                     >
-                                    <option value="">가맹점 자동결제용 USDT지갑 변경</option>
+                                    <option value="">상점 자동결제용 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -1835,15 +1835,15 @@ export default function SettingsPage({ params }: any) {
                                     onClick={() => {
                                         if (!selectedSettlementWalletAddress) {
                                         toast.error
-                                            ('가맹점 자동결제용 USDT지갑을 선택하세요.');
+                                            ('상점 자동결제용 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSettlementWalletAddress === store?.settlementWalletAddress) {
-                                        toast.error('현재 가맹점 자동결제용 USDT지갑과 동일합니다.');
+                                        toast.error('현재 상점 자동결제용 USDT지갑과 동일합니다.');
                                         return;
                                         }
                                         confirm(
-                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 자동결제용 USDT지갑을 변경하시겠습니까?`
+                                        `정말 ${selectedSettlementWalletAddress}로 상점 자동결제용 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSettlementWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -1864,7 +1864,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    가맹점 홈페이지에서 회원가입 후 가맹점 자동결제용 USDT지갑을 설정하세요.
+                                    상점 홈페이지에서 회원가입 후 상점 자동결제용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -1887,7 +1887,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        가맹점 수수료 USDT지갑 설정
+                                        상점 수수료 USDT지갑 설정
                                     </span>
                                 </div>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
@@ -1920,7 +1920,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                         />
                                         <span className="text-sm text-red-500">
-                                        {store && store.storeName}의 가맹점 수수료 USDT지갑 설정되지 않았습니다.
+                                        {store && store.storeName}의 상점 수수료 USDT지갑 설정되지 않았습니다.
                                         </span>
                                     </div>
                                     )}
@@ -1946,7 +1946,7 @@ export default function SettingsPage({ params }: any) {
                                             bg-white text-zinc-500 text-sm"
                                         disabled={updatingSettlementFeeWalletAddress}
                                         >
-                                        <option value="">가맹점 수수료 USDT지갑 변경</option>
+                                        <option value="">상점 수수료 USDT지갑 변경</option>
                                         {allAdminSellers.map((user) => (
                                             <option key={user._id} value={user.walletAddress}>
                                             {user.nickname}
@@ -1958,15 +1958,15 @@ export default function SettingsPage({ params }: any) {
                                         <button
                                         onClick={() => {
                                             if (!selectedSettlementFeeWalletAddress) {
-                                            toast.error('가맹점 수수료 USDT지갑을 선택하세요.');
+                                            toast.error('상점 수수료 USDT지갑을 선택하세요.');
                                             return;
                                             }
                                             if (selectedSettlementFeeWalletAddress === store?.settlementFeeWalletAddress) {
-                                            toast.error('현재 가맹점 수수료 USDT지갑과 동일합니다.');
+                                            toast.error('현재 상점 수수료 USDT지갑과 동일합니다.');
                                             return;
                                             }
                                             confirm(
-                                            `정말 ${selectedSettlementFeeWalletAddress}로 가맹점 수수료 USDT지갑을 변경하시겠습니까?`
+                                            `정말 ${selectedSettlementFeeWalletAddress}로 상점 수수료 USDT지갑을 변경하시겠습니까?`
                                             ) && updateSettlementFeeWalletAddress();
                                         }}
                                         className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -1987,7 +1987,7 @@ export default function SettingsPage({ params }: any) {
                                         <span className="text-sm text-red-500">
                                         {store && store.storeName}의 회원이 없습니다.
                                         <br />
-                                        가맹점 홈페이지에서 회원가입 후 가맹점 수수료 USDT지갑을 설정하세요.
+                                        상점 홈페이지에서 회원가입 후 상점 수수료 USDT지갑을 설정하세요.
                                         </span>
                                     </div>
                                     )}
@@ -2006,7 +2006,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        가맹점 수수료 수수료율(%) 설정
+                                        상점 수수료 수수료율(%) 설정
                                     </span>
                                 </div>
 
@@ -2016,7 +2016,7 @@ export default function SettingsPage({ params }: any) {
                                         {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
-                                            가맹점 수수료율(%) 현재값
+                                            상점 수수료율(%) 현재값
                                         </span>
                                         <span className="text-xl text-zinc-500 font-bold">
                                             {store && store.settlementFeePercent}
@@ -2027,7 +2027,7 @@ export default function SettingsPage({ params }: any) {
                                         <input
                                             disabled={!address}
                                             className="p-2 w-64 text-zinc-100 bg-zinc-800 rounded text-xl font-semibold"
-                                            placeholder="가맹점 수수료율을 입력하세요"
+                                            placeholder="상점 수수료율을 입력하세요"
                                             value={settlementFeePercent}
                                             type='number'
                                             onChange={(e) => {
@@ -2047,7 +2047,7 @@ export default function SettingsPage({ params }: any) {
                                         />
                                         <div className='flex flex-row gap-2 items-center justify-between'>
                                             <span className='text-sm font-semibold'>
-                                                가맹점 수수료율을 설정하세요
+                                                상점 수수료율을 설정하세요
                                             </span>
                                         </div>
                                     </div>
@@ -2059,19 +2059,19 @@ export default function SettingsPage({ params }: any) {
                                         className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!settlementFeePercent ? "opacity-50" : ""}`}
                                         onClick={() => {
                                             if (!settlementFeePercent) {
-                                                toast.error("가맹점 수수료율을 입력하세요");
+                                                toast.error("상점 수수료율을 입력하세요");
                                                 return;
                                             }
                                             if (settlementFeePercent < 0.01 || settlementFeePercent > 5.00) {
-                                                toast.error("가맹점 수수료율은 0.01 ~ 5.00%로 설정하세요");
+                                                toast.error("상점 수수료율은 0.01 ~ 5.00%로 설정하세요");
                                                 return;
                                             }
                                             if (settlementFeePercent === store?.settlementFeePercent) {
-                                                toast.error('현재 가맹점 수수료율과 동일합니다.');
+                                                toast.error('현재 상점 수수료율과 동일합니다.');
                                                 return;
                                             }
                                             confirm(
-                                                `정말 ${settlementFeePercent}로 가맹점 수수료율을 변경하시겠습니까?`
+                                                `정말 ${settlementFeePercent}로 상점 수수료율을 변경하시겠습니까?`
                                             ) && updateSettlementFeePercent();
                                         }}
                                     >
@@ -2081,7 +2081,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 <div className='flex flex-row gap-2 items-center justify-between'>
                                     <span className='text-sm font-semibold'>
-                                        가맹점 수수료율은 0.01 ~ 5.00%로 설정하세요
+                                        상점 수수료율은 0.01 ~ 5.00%로 설정하세요
                                     </span>
                                 </div>
 
@@ -2106,7 +2106,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                 />
                                 <span className="text-lg text-zinc-500">
-                                    가맹점 판매자 USDT지갑 설정
+                                    상점 판매자 USDT지갑 설정
                                 </span>
                             </div>
 
@@ -2141,7 +2141,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 판매자 USDT지갑이 설정되지 않았습니다.
+                                    {store && store.storeName}의 상점 판매자 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -2170,7 +2170,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 판매자 USDT지갑 변경</option>
+                                    <option value="">상점 판매자 USDT지갑 변경</option>
                                     {allAdminSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2182,16 +2182,16 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
-                                        toast.error('가맹점 판매자 USDT지갑을 선택하세요.');
+                                        toast.error('상점 판매자 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 판매자 USDT지갑과 동일합니다.');
+                                        toast.error('현재 상점 판매자 USDT지갑과 동일합니다.');
                                         return;
                                         }
 
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자 USDT지갑을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 상점 판매자 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2212,7 +2212,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    회원가입 후 가맹점 USDT지갑을 설정하세요.
+                                    회원가입 후 상점 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -2229,7 +2229,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 판매자 USDT지갑 변경</option>
+                                    <option value="">상점 판매자 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2241,16 +2241,16 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
-                                        toast.error('가맹점 판매자 USDT지갑을 선택하세요.');
+                                        toast.error('상점 판매자 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 판매자 USDT지갑과 동일합니다.');
+                                        toast.error('현재 상점 판매자 USDT지갑과 동일합니다.');
                                         return;
                                         }
 
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자 USDT지갑을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 상점 판매자 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2271,7 +2271,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    회원가입 후 가맹점 USDT지갑을 설정하세요.
+                                    회원가입 후 상점 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -2285,7 +2285,7 @@ export default function SettingsPage({ params }: any) {
 
 
                         {/* store bankInfo settings */}
-                        {/* 가맹점 결제용 통장 설정 */}
+                        {/* 상점 결제용 통장 설정 */}
                         <div className='w-full flex flex-col items-start justify-center gap-2
                             border border-gray-400 p-4 rounded-lg'>
 
@@ -2302,7 +2302,7 @@ export default function SettingsPage({ params }: any) {
                                     />
                                     
                                     <span className="text-lg">
-                                        가맹점 결제용 통장 설정
+                                        상점 결제용 통장 설정
                                     </span>
                                 </div>
 
@@ -2359,7 +2359,7 @@ export default function SettingsPage({ params }: any) {
                                             }
 
                                             confirm(
-                                                `정말 ${bankName} ${accountNumber} ${accountHolder}로 가맹점 결제용 통장을 변경하시겠습니까?`
+                                                `정말 ${bankName} ${accountNumber} ${accountHolder}로 상점 결제용 통장을 변경하시겠습니까?`
                                             ) && writeStoreBankInfo();
                                         }}
                                     >
@@ -2466,7 +2466,7 @@ export default function SettingsPage({ params }: any) {
                                             }
 
                                             confirm(
-                                                `정말 ${paymentUrl}로 가맹점 결제 URL을 변경하시겠습니까?`
+                                                `정말 ${paymentUrl}로 상점 결제 URL을 변경하시겠습니까?`
                                             ) && updatePaymentUrl();
                                         }}
                                     >
@@ -2614,12 +2614,12 @@ export default function SettingsPage({ params }: any) {
                                                 ? "opacity-50" : ""}`}
                                             onClick={() => {
                                                 if (!accessToken) {
-                                                    toast.error("가맹점 Access Token을 입력하세요");
+                                                    toast.error("상점 Access Token을 입력하세요");
                                                     return;
                                                 }
 
                                                 confirm(
-                                                    `정말 ${accessToken}로 가맹점 Access Token을 변경하시겠습니까?`
+                                                    `정말 ${accessToken}로 상점 Access Token을 변경하시겠습니까?`
                                                 ) && updateStoreAccessToken();
                                             }}
                                         >
@@ -2638,7 +2638,7 @@ export default function SettingsPage({ params }: any) {
                                             style={{ marginTop: '8px' }}
                                             onClick={() => {
                                                 confirm(
-                                                    `정말 ${accessToken}로 가맹점 Access Token을 초기화하시겠습니까?`
+                                                    `정말 ${accessToken}로 상점 Access Token을 초기화하시겠습니까?`
                                                 ) && resetAccessToken();
                                             }}
                                         >
@@ -2747,7 +2747,7 @@ export default function SettingsPage({ params }: any) {
                                             }
 
                                             confirm(
-                                                `정말 ${paymentCallbackUrl}로 가맹점 결제 콜백 URL을 변경하시겠습니까?`
+                                                `정말 ${paymentCallbackUrl}로 상점 결제 콜백 URL을 변경하시겠습니까?`
                                             ) && updatePaymentCallbackUrl();
                                         }}
                                     >

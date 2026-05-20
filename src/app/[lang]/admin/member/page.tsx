@@ -1372,15 +1372,6 @@ export default function Index({ params }: any) {
       toast.error('입금자명을 입력해주세요.');
       return;
     }
-    if (!userBankName) {
-      toast.error('은행명을 입력해주세요.');
-      return;
-    }
-    if (!userBankAccountNumber) {
-      toast.error('계좌번호를 입력해주세요.');
-      return;
-    }
-
     /*
     if (searchStorecode === '') {
       toast.error('가맹점 코드를 선택해주세요.');

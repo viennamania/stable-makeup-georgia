@@ -83,8 +83,10 @@ export const validateBuyerRegistrationInput = ({
   userBankAccountNumber: unknown;
 }, {
   requireBankName = true,
+  requireBankAccountNumber = true,
 }: {
   requireBankName?: boolean;
+  requireBankAccountNumber?: boolean;
 } = {}): string | null => {
   const nicknameError = validateNicknameForCreation(nickname);
   if (nicknameError) {
@@ -119,8 +121,13 @@ export const validateBuyerRegistrationInput = ({
     }
   }
 
-  const bankAccountDigits = String(userBankAccountNumber || "").replace(/[^0-9]/g, "");
-  if (bankAccountDigits.length < 1 || bankAccountDigits.length > 30) {
+  const safeUserBankAccountNumber = normalizeText(userBankAccountNumber);
+  const bankAccountDigits = safeUserBankAccountNumber.replace(/[^0-9]/g, "");
+  if (!safeUserBankAccountNumber) {
+    if (requireBankAccountNumber) {
+      return "유효하지 않은 계좌번호입니다.";
+    }
+  } else if (bankAccountDigits.length < 1 || bankAccountDigits.length > 30) {
     return "유효하지 않은 계좌번호입니다.";
   }
 
