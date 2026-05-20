@@ -1127,12 +1127,14 @@ export default function Index({ params }: any) {
 
 
             className="p-2 text-sm bg-transparent text-zinc-800 rounded"
-            value={params.lang}
+            value={params.lang === "en" ? "en" : "ko"}
             onChange={(e) => {
               const lang = e.target.value;
-              router.push(
-                "/" + lang + "/" + storecode
-              );
+              document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+              document.cookie = lang === "en"
+                ? "googtrans=/ko/en; path=/; max-age=31536000; SameSite=Lax"
+                : "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+              window.location.assign("/" + lang + "/" + storecode);
             }}
           >
             <option value="en">
@@ -1140,12 +1142,6 @@ export default function Index({ params }: any) {
             </option>
             <option value="ko">
               한국어(KR)
-            </option>
-            <option value="zh">
-              中文(ZH)
-            </option>
-            <option value="ja">
-              日本語(JP)
             </option>
           </select>
 

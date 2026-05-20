@@ -5,8 +5,16 @@ import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import { Button, Menu, MenuItem, Typography } from "@mui/material";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import {
+  buildLocalizedPathname,
+  DEFAULT_LOCALE,
+  getLocaleFromPathname,
+  isSupportedLocale,
+  LOCALE_COOKIE_NAME,
+  type SupportedLocale,
+} from "@/lib/i18n";
 import { langs } from "@/utils/langs";
 
 
@@ -16,10 +24,12 @@ const AppBarComponent = () => {
 
   const router = useRouter();
   const pathname = usePathname();
-  const [currentLang, setCurrentLang] = React.useState("en");
-  const [selectedLang, setSelectedLang] = React.useState("English");
+  const searchParams = useSearchParams();
+  const queryLocale = searchParams?.get("lang");
+  const [currentLang, setCurrentLang] = React.useState<SupportedLocale>(DEFAULT_LOCALE);
+  const [selectedLang, setSelectedLang] = React.useState("한국어");
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const pathLang = pathname?.split("/").at(1) || "en";
+  const pathLang = getLocaleFromPathname(pathname) || currentLang;
   const adminClearanceHistoryPath = `/${pathLang}/admin/clearance-history`;
   const adminOrderClearanceManagementPath = `/${pathLang}/admin/clearance-management`;
   const adminClearanceManagementPath = `/${pathLang}/admin/store/clearance-management`;
@@ -30,23 +40,28 @@ const AppBarComponent = () => {
     pathname?.startsWith(adminOrderClearanceManagementPath) || false;
   const isAdminClearanceManagementPath =
     pathname?.startsWith(adminClearanceManagementPath) || false;
+  const labels = currentLang === "en"
+    ? {
+        clearanceHistory: "Clearance History",
+        clearanceManagement: "Clearance Management",
+        storeClearanceManagement: "Store Clearance",
+      }
+    : {
+        clearanceHistory: "청산내역",
+        clearanceManagement: "청산관리",
+        storeClearanceManagement: "가맹점 청산관리",
+      };
 
   React.useEffect(() => {
-    
-    const lang = pathname?.split("/").at(1);
+    const nextLang =
+      getLocaleFromPathname(pathname) ||
+      (isSupportedLocale(queryLocale) ? queryLocale : null) ||
+      DEFAULT_LOCALE;
+    const nextLangConfig = langs.find((l) => l.lang === nextLang);
 
-    const currentLang = langs.find((l) => l.lang === lang);
-  
-    if (currentLang) {
-      setCurrentLang(currentLang.lang);
-      setSelectedLang(currentLang.fullName);
-    }
-  
-    if (!currentLang) {
-      setCurrentLang("en");
-      setSelectedLang("English");
-    }
-  }, [pathname]);
+    setCurrentLang(nextLang);
+    setSelectedLang(nextLangConfig?.fullName || "한국어");
+  }, [pathname, queryLocale]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -56,32 +71,37 @@ const AppBarComponent = () => {
     setAnchorEl(null);
   };
 
+  const setGoogleTranslateLocale = (locale: SupportedLocale) => {
+    if (locale === "en") {
+      document.cookie = "googtrans=/ko/en; path=/; max-age=31536000; SameSite=Lax";
+      return;
+    }
 
-
-  function handleLangChange({ lang, fullName }: { lang: string; fullName: string }) {
-    const language = lang ? "/" + lang : "/en";
-
-    
-    ///router.push(`${language}`);
-    
-    // const lang = pathname?.split("/").at(1);
-
+    document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+  };
 
 
 
-    const path = (pathname ?? "").split("/").slice(2).join("/");
+  function handleLangChange({ lang, fullName }: (typeof langs)[number]) {
+    const nextPathname = buildLocalizedPathname(pathname, lang);
+    const nextSearchParams = new URLSearchParams(searchParams?.toString());
 
-    console.log("language", language);
-    console.log("pathname", pathname);
-    console.log("path", path);
+    document.cookie = `${LOCALE_COOKIE_NAME}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+    setGoogleTranslateLocale(lang);
 
+    if (getLocaleFromPathname(nextPathname)) {
+      nextSearchParams.delete("lang");
+    } else {
+      nextSearchParams.set("lang", lang);
+    }
 
-    router.push(language + "/" + path);
-
-
+    const queryString = nextSearchParams.toString();
+    const nextUrl = `${nextPathname}${queryString ? `?${queryString}` : ""}`;
 
     setSelectedLang(fullName);
     handleClose();
+
+    window.location.assign(nextUrl);
   }
 
   return (
@@ -99,7 +119,7 @@ const AppBarComponent = () => {
           */}
 
           <div className="w-[140px] sm:w-[250px] flex flex-row justify-between items-center">
-            <div>
+            <div className="notranslate" translate="no">
               <Button
                 size="small"
                 aria-label="change lang button"
@@ -165,7 +185,7 @@ const AppBarComponent = () => {
                 }}
                 variant="outlined"
               >
-                청산내역
+                {labels.clearanceHistory}
               </Button>
 
               <Button
@@ -191,7 +211,7 @@ const AppBarComponent = () => {
                 }}
                 variant="outlined"
               >
-                청산관리
+                {labels.clearanceManagement}
               </Button>
 
               <Button
@@ -217,7 +237,7 @@ const AppBarComponent = () => {
                 }}
                 variant="outlined"
               >
-                가맹점 청산관리
+                {labels.storeClearanceManagement}
               </Button>
             </div>
           )}

@@ -99,6 +99,7 @@ import {
 
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
+import { DEFAULT_LOCALE, getLocaleFromPathname } from "@/lib/i18n";
 import { add } from "thirdweb/extensions/farcaster/keyGateway";
 import { toast } from "react-hot-toast";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
@@ -126,6 +127,37 @@ const AgentConsole = (
 
   
   const router = useRouter();
+  const pathname = usePathname();
+  const currentLang = getLocaleFromPathname(pathname) || DEFAULT_LOCALE;
+  const labels = currentLang === "en"
+    ? {
+        withdraw: "Withdraw",
+        lowGas: (
+          <>
+            Not enough gas balance.
+            <br />
+            Deposits are available,
+            <br />
+            but withdrawals are not possible
+            <br />
+            without gas.
+          </>
+        ),
+      }
+    : {
+        withdraw: "출금하기",
+        lowGas: (
+          <>
+            가스비용이 부족합니다.
+            <br />
+            가스비용이 부족하면
+            <br />
+            입금은 가능하지만
+            <br />
+            출금은 불가능합니다.
+          </>
+        ),
+      };
 
 
   /*
@@ -656,7 +688,7 @@ const AgentConsole = (
                   {/* if pol balance is 0, comment out the text */}
                   {nativeBalance < 0.0001 && (
                     <p className="text-sm text-red-500">
-                      가스비용이 부족합니다.<br/>가스비용이 부족하면<br/>입금은 가능하지만<br/>출금은 불가능합니다.
+                      {labels.lowGas}
                     </p>
                   )}
                 </div>
@@ -665,11 +697,11 @@ const AgentConsole = (
                   className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
                   onClick={() => {
 
-                    router.push('/ko/withdraw-usdt');
+                    router.push(`/${currentLang}/withdraw-usdt`);
 
                   }}
                 >
-                  출금하기
+                  {labels.withdraw}
                 </button>
 
 

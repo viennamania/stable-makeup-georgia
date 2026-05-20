@@ -1,38 +1,13 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
+import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, resolveLocale } from "@/lib/i18n";
 
-// redirect to /en
+export default function Page() {
+  const preferredLocale = resolveLocale(
+    cookies().get(LOCALE_COOKIE_NAME)?.value,
+    DEFAULT_LOCALE,
+  );
 
-import React from 'react';
-
-// check location and redirect to /en or /ko
-
-
-
-
-
-const Page = () => {
-
-
-    // redirect to /en
-
-
-    // automatically redirect to /en
-
-    //if (typeof window !== 'undefined') {
-
-         ///window.location.href = '/en';
-
-    //}
-
-    
-
-
-
-    return (
-        <div>
-            <h1>Page</h1>
-        </div>
-    );
-};
-
-export default Page;
+  redirect(`/${preferredLocale}/homepage`);
+}
