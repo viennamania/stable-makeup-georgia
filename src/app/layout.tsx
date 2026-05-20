@@ -203,7 +203,7 @@ export default function RootLayout({
           <Toaster />
           <CenterStoreAdminFetchSignatureBridge />
           <GoogleTranslate />
-          <LanguageSelector />
+          {!isPromotionPage && <LanguageSelector />}
 
           {/* chain image */}
 

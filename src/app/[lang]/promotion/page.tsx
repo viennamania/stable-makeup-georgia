@@ -20,6 +20,7 @@ import {
 import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
 import { client } from "@/app/client";
 import { chain as configuredChain } from "@/app/config/contractAddresses";
+import LanguageSelector from "@/components/LanguageSelector";
 
 type BankFeedItem = {
   id: string;
@@ -1486,7 +1487,7 @@ export default function PromotionPage() {
                 VASP 운영
               </span>
             </div>
-            <div className="promo-nav-links grid w-full grid-cols-1 gap-1.5 min-[390px]:grid-cols-3 sm:flex sm:w-auto sm:flex-wrap">
+            <div className="promo-nav-links grid w-full grid-cols-1 gap-1.5 min-[390px]:grid-cols-2 sm:flex sm:w-auto sm:flex-wrap">
               <Link
                 href={`/${lang}/realtime-banktransfer`}
                 className="inline-flex min-h-[38px] items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/70 px-2.5 py-1.5 text-center text-[11px] leading-tight text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100 sm:text-xs"
@@ -1505,6 +1506,10 @@ export default function PromotionPage() {
               >
                 Settlement
               </Link>
+              <LanguageSelector
+                variant="inline"
+                className="min-h-[38px] w-full justify-center rounded-lg border border-slate-600/70 bg-slate-900/70 px-2.5 py-1.5 text-[11px] sm:w-auto sm:text-xs [&>select]:border-slate-600/80 [&>select]:bg-slate-950/80 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-slate-300"
+              />
             </div>
           </nav>
 
