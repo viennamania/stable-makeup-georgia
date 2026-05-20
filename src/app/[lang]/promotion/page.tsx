@@ -1123,7 +1123,7 @@ export default function PromotionPage() {
     <main className="relative w-full min-h-screen overflow-hidden bg-[#030711] text-slate-100">
       <LanguageSelector
         variant="inline"
-        className="fixed right-2 top-2 z-[260] min-h-[38px] justify-center rounded-lg border border-cyan-300/55 bg-slate-950/92 px-2.5 py-1.5 text-[11px] shadow-[0_12px_32px_-18px_rgba(34,211,238,0.85)] backdrop-blur-xl sm:right-4 sm:top-4 sm:text-xs [&>select]:border-slate-600/80 [&>select]:bg-slate-950/95 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-cyan-100"
+        className="fixed right-2 top-2 z-[2600] min-h-[42px] justify-center rounded-lg border border-cyan-300/70 bg-slate-950/95 px-3 py-2 text-xs shadow-[0_16px_36px_-16px_rgba(34,211,238,0.92)] ring-1 ring-cyan-300/30 backdrop-blur-xl sm:right-4 sm:top-4 [&>select]:border-slate-600/80 [&>select]:bg-slate-950/95 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-cyan-100"
       />
 
       <aside
