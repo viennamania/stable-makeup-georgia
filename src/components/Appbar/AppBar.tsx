@@ -5,7 +5,7 @@ import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import { Button, Menu, MenuItem, Typography } from "@mui/material";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   buildLocalizedPathname,
@@ -24,8 +24,6 @@ const AppBarComponent = () => {
 
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const queryLocale = searchParams?.get("lang");
   const [currentLang, setCurrentLang] = React.useState<SupportedLocale>(DEFAULT_LOCALE);
   const [selectedLang, setSelectedLang] = React.useState("한국어");
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -55,13 +53,12 @@ const AppBarComponent = () => {
   React.useEffect(() => {
     const nextLang =
       getLocaleFromPathname(pathname) ||
-      (isSupportedLocale(queryLocale) ? queryLocale : null) ||
       DEFAULT_LOCALE;
     const nextLangConfig = langs.find((l) => l.lang === nextLang);
 
     setCurrentLang(nextLang);
     setSelectedLang(nextLangConfig?.fullName || "한국어");
-  }, [pathname, queryLocale]);
+  }, [pathname]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -84,7 +81,9 @@ const AppBarComponent = () => {
 
   function handleLangChange({ lang, fullName }: (typeof langs)[number]) {
     const nextPathname = buildLocalizedPathname(pathname, lang);
-    const nextSearchParams = new URLSearchParams(searchParams?.toString());
+    const nextSearchParams = new URLSearchParams(
+      typeof window === "undefined" ? "" : window.location.search,
+    );
 
     document.cookie = `${LOCALE_COOKIE_NAME}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
     setGoogleTranslateLocale(lang);
