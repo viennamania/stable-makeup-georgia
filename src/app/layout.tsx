@@ -24,7 +24,7 @@ import localFont from "next/font/local";
 
 import Image from "next/image";
 import { useRouter }from "next//navigation";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 
 
@@ -35,7 +35,7 @@ import CenterConsole from '@/components/CenterConsole';
 import CenterStoreAdminFetchSignatureBridge from "@/components/CenterStoreAdminFetchSignatureBridge";
 import GoogleTranslate from "@/components/GoogleTranslate";
 import LanguageSelector from "@/components/LanguageSelector";
-import { DEFAULT_LOCALE, getLocaleFromPathname, isSupportedLocale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, getLocaleFromPathname } from "@/lib/i18n";
 
 
 import {
@@ -96,11 +96,8 @@ export default function RootLayout({
 
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const queryLocale = searchParams?.get("lang");
   const currentLang =
     getLocaleFromPathname(pathname) ||
-    (isSupportedLocale(queryLocale) ? queryLocale : null) ||
     DEFAULT_LOCALE;
   const chromeLabels = currentLang === "en"
     ? {

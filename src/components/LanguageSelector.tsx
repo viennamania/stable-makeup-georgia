@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   buildLocalizedPathname,
@@ -58,24 +58,18 @@ const LanguageSelector = ({
 }: LanguageSelectorProps) => {
   const router = useRouter();
   const pathname = usePathname() || "/";
-  const searchParams = useSearchParams();
   const pathLocale = getLocaleFromPathname(pathname);
-  const queryLocale = searchParams?.get("lang");
-  const initialLocale =
-    pathLocale ||
-    (isSupportedLocale(queryLocale) ? queryLocale : null) ||
-    DEFAULT_LOCALE;
+  const initialLocale = pathLocale || DEFAULT_LOCALE;
   const [selectedLocale, setSelectedLocale] =
     React.useState<SupportedLocale>(initialLocale);
 
   React.useEffect(() => {
     const nextLocale =
       pathLocale ||
-      (isSupportedLocale(queryLocale) ? queryLocale : null) ||
       getCookieLocale() ||
       DEFAULT_LOCALE;
     setSelectedLocale(nextLocale);
-  }, [pathLocale, queryLocale, pathname]);
+  }, [pathLocale, pathname]);
 
   const handleLangChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const nextLocale = event.target.value;
@@ -88,7 +82,9 @@ const LanguageSelector = ({
     setSelectedLocale(nextLocale);
 
     const nextPathname = buildLocalizedPathname(pathname, nextLocale);
-    const nextSearchParams = new URLSearchParams(searchParams?.toString());
+    const nextSearchParams = new URLSearchParams(
+      typeof window === "undefined" ? "" : window.location.search,
+    );
 
     if (getLocaleFromPathname(nextPathname)) {
       nextSearchParams.delete("lang");
