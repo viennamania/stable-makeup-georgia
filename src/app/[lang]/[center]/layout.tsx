@@ -59,6 +59,7 @@ import {
 
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
+import { resolveLocale } from "@/lib/i18n";
 
 
 import { useSearchParams } from 'next/navigation';
@@ -90,6 +91,10 @@ export default function RootLayout({
 }>) {
 
   const searchParams = useSearchParams()!;
+  const currentLang = resolveLocale(params.lang);
+  const walletLabels = currentLang === "en"
+    ? { hideWallet: "Hide Wallet", showWallet: "Show Wallet" }
+    : { hideWallet: "지갑 숨기기", showWallet: "지갑 보기" };
 
 
   const router = useRouter();
@@ -214,7 +219,7 @@ export default function RootLayout({
                 />
 
                 <span className="text-sm text-white">
-                  {showCenter ? 'Hide Wallet' : 'Show Wallet'}
+                  {showCenter ? walletLabels.hideWallet : walletLabels.showWallet}
                 </span>
             </button>
 

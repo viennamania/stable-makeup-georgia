@@ -232,6 +232,8 @@
 
     "Request_Payment": "Request Payment",
 
+    "Checking_the_bank_transfer_from_the_buyer": "Checking the buyer's bank transfer",
+
 
     "I_agree_to_check_the_bank_transfer_of": "I agree to check the bank transfer of KRW from buyer and transfer USDT to the buyer wallet address.",
 

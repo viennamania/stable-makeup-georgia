@@ -24,7 +24,7 @@ import localFont from "next/font/local";
 
 import Image from "next/image";
 import { useRouter }from "next//navigation";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 
 
@@ -33,6 +33,9 @@ import StabilityConsole from '@/components/StabilityConsole';
 
 import CenterConsole from '@/components/CenterConsole';
 import CenterStoreAdminFetchSignatureBridge from "@/components/CenterStoreAdminFetchSignatureBridge";
+import GoogleTranslate from "@/components/GoogleTranslate";
+import LanguageSelector from "@/components/LanguageSelector";
+import { DEFAULT_LOCALE, getLocaleFromPathname, isSupportedLocale } from "@/lib/i18n";
 
 
 import {
@@ -93,6 +96,29 @@ export default function RootLayout({
 
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const queryLocale = searchParams?.get("lang");
+  const currentLang =
+    getLocaleFromPathname(pathname) ||
+    (isSupportedLocale(queryLocale) ? queryLocale : null) ||
+    DEFAULT_LOCALE;
+  const chromeLabels = currentLang === "en"
+    ? {
+        hideChain: "Hide Chain",
+        showChain: "Show Chain",
+        stabilityId: "STABILITY ID",
+        blockchainId: "BLOCKCHAIN ID",
+        stablecoinDescription:
+          "Stablecoins deliver multiple valuable advantages to people who wish to maintain control over their cryptocurrencies",
+      }
+    : {
+        hideChain: "체인 숨기기",
+        showChain: "체인 보기",
+        stabilityId: "스테이블리티 ID",
+        blockchainId: "블록체인 ID",
+        stablecoinDescription:
+          "스테이블코인은 암호화폐를 직접 관리하려는 사용자에게 여러 가지 실질적인 이점을 제공합니다.",
+      };
 
   /*
   useEffect(() => {
@@ -127,7 +153,7 @@ export default function RootLayout({
 
   return (
 
-    <html lang="ko" className={`${pretendard.variable}`}>
+    <html lang={currentLang} className={`${pretendard.variable}`}>
 
     {/*
     <html lang="en">
@@ -179,6 +205,8 @@ export default function RootLayout({
 
           <Toaster />
           <CenterStoreAdminFetchSignatureBridge />
+          <GoogleTranslate />
+          <LanguageSelector />
 
           {/* chain image */}
 
@@ -236,7 +264,7 @@ export default function RootLayout({
                   />
 
                   <span className="text-sm text-white">
-                    {showChain ? 'Hide Chain' : 'Show Chain'}
+                    {showChain ? chromeLabels.hideChain : chromeLabels.showChain}
                   </span>
 
                 </div>
@@ -258,7 +286,7 @@ export default function RootLayout({
                       height={50}
                       className="h-12 w-12 rounded-lg object-cover"
                     />
-                    <span className="text-sm text-gray-600">STABILITY ID</span>
+                    <span className="text-sm text-gray-600">{chromeLabels.stabilityId}</span>
                   </div>
 
                   <div className="flex flex-row items-center gap-2">
@@ -279,7 +307,7 @@ export default function RootLayout({
                   <span className="text-sm text-gray-600
                     w-64 xl:w-72 flex flex-col items-center justify-center mt-2
                     ">
-                    Stablecoins deliver multiple valuable advantages to people who wish to maintain control over their cryptocurrencies
+                    {chromeLabels.stablecoinDescription}
                   </span>
 
                 </div>
@@ -300,7 +328,7 @@ export default function RootLayout({
                       height={50}
                       className="h-12 w-12 rounded-lg object-cover"
                     />
-                    <span className="text-sm text-gray-600">BLOCKCHAIN ID</span>
+                    <span className="text-sm text-gray-600">{chromeLabels.blockchainId}</span>
                   </div>
 
                   <div className="flex flex-row items-center justify-center gap-4 mb-4">

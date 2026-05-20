@@ -28,18 +28,6 @@ const nextConfig = {
   },
   */
 
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/ko/admin/homepage',
-        permanent: true,
-      },
-    ]
-  },
-
-
-
   /*
   async headers() {
     return [

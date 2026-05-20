@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { resolveLocale } from "@/lib/i18n";
+
 export default function SuperadminLayout({
   children,
   params,
@@ -8,7 +10,26 @@ export default function SuperadminLayout({
   children: ReactNode;
   params: { lang: string };
 }) {
-  const lang = params?.lang || "ko";
+  const lang = resolveLocale(params?.lang);
+  const labels = lang === "en"
+    ? {
+        eyebrow: "Superadmin Control",
+        title: "Darknight Operations Deck",
+        description: "A secured operations area for superadmin-only controls.",
+        controlDeck: "Control Deck",
+        paymentWallets: "Payment Wallets",
+        buyorderWatch: "Buyorder Watch",
+        accessRequests: "Access Requests",
+      }
+    : {
+        eyebrow: "슈퍼어드민 관리",
+        title: "다크나이트 운영 데크",
+        description: "슈퍼어드민 전용 관리 기능만 분리한 보안 운영 영역입니다.",
+        controlDeck: "관리 데크",
+        paymentWallets: "결제 지갑",
+        buyorderWatch: "구매주문 모니터",
+        accessRequests: "접근 요청",
+      };
 
   return (
     <div className="min-h-screen bg-[#070a12] text-slate-100">
@@ -18,13 +39,13 @@ export default function SuperadminLayout({
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-cyan-300/90">
-                  Superadmin Control
+                  {labels.eyebrow}
                 </div>
                 <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[30px]">
-                  Darknight Operations Deck
+                  {labels.title}
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-slate-300/80">
-                  슈퍼어드민 전용 관리 기능만 분리한 보안 운영 영역입니다.
+                  {labels.description}
                 </p>
               </div>
 
@@ -33,25 +54,25 @@ export default function SuperadminLayout({
                   href={`/${lang}/superadmin`}
                   className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300/50 hover:bg-cyan-400/15"
                 >
-                  Control Deck
+                  {labels.controlDeck}
                 </Link>
                 <Link
                   href={`/${lang}/superadmin/store-payment-wallets`}
                   className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-100 transition hover:border-amber-300/50 hover:bg-amber-400/15"
                 >
-                  Payment Wallets
+                  {labels.paymentWallets}
                 </Link>
                 <Link
                   href={`/${lang}/superadmin/buyorder-watch`}
                   className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:border-emerald-300/50 hover:bg-emerald-400/15"
                 >
-                  Buyorder Watch
+                  {labels.buyorderWatch}
                 </Link>
                 <Link
                   href={`/${lang}/superadmin/access-requests`}
                   className="rounded-full border border-fuchsia-400/30 bg-fuchsia-400/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 transition hover:border-fuchsia-300/50 hover:bg-fuchsia-400/15"
                 >
-                  Access Requests
+                  {labels.accessRequests}
                 </Link>
               </div>
             </div>
