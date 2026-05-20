@@ -1,0 +1,11 @@
+.env
+.env.*
+.locks/
+logs/
+reports/
+test-results/
+node_modules/
+.next/
+coverage/
+tmp/
+tmp-*.json
