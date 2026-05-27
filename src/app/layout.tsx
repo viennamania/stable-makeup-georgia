@@ -132,6 +132,7 @@ export default function RootLayout({
 
   const [showCenter, setShowCenter] = useState(false);
   const isPromotionPage = pathname?.endsWith("/promotion");
+  const isScanHomePage = /^\/[^/]+\/scan\/?$/.test(String(pathname || ""));
   const isScanPage = /^\/[^/]+\/scan(?:\/.*)?$/.test(String(pathname || ""));
   const isSuperadminBuyorderWatchPage = /^\/[^/]+\/superadmin\/buyorder-watch(?:\/.*)?$/.test(
     String(pathname || ""),
@@ -205,7 +206,7 @@ export default function RootLayout({
           <Toaster />
           <CenterStoreAdminFetchSignatureBridge />
           <GoogleTranslate />
-          {!isPromotionPage && !isRealtimePage && <LanguageSelector />}
+          {!isPromotionPage && !isRealtimePage && !isScanHomePage && <LanguageSelector />}
 
           {/* chain image */}
 
