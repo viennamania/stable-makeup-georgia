@@ -12,6 +12,7 @@ import {
   type BuyOrderStatusRealtimeEvent,
 } from "@lib/ably/constants";
 import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
+import { getRealtimeCopy, type RealtimeCopy } from "../realtime.assets";
 
 type RealtimeItem = {
   id: string;
@@ -54,27 +55,12 @@ function isCompletedSettlementEvent(event: BuyOrderStatusRealtimeEvent): boolean
   return amountUsdt > 0 || amountKrw > 0 || hasSettlementReference(event);
 }
 
-function getStatusLabel(status: string | null | undefined): string {
-  switch (status) {
-    case "ordered":
-      return "주문접수";
-    case "accepted":
-      return "매칭완료";
-    case "paymentRequested":
-      return "결제요청";
-    case "paymentConfirmed":
-      return "결제완료";
-    case "paymentSettled":
-      return "정산완료";
-    case "cancelled":
-      return "취소";
-    default:
-      return String(status || "-");
-  }
+function getStatusLabel(status: string | null | undefined, copy: RealtimeCopy): string {
+  return copy.statusLabels[status as keyof RealtimeCopy["statusLabels"]] || String(status || "-");
 }
 
-function formatKrw(value: number): string {
-  return Number(value || 0).toLocaleString("ko-KR");
+function formatKrw(value: number, locale: string): string {
+  return Number(value || 0).toLocaleString(locale);
 }
 
 function formatUsdt(value: number): string {
@@ -196,6 +182,7 @@ function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
 export default function RealtimeSettlementPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
+  const copy = useMemo(() => getRealtimeCopy(lang), [lang]);
 
   const [events, setEvents] = useState<RealtimeItem[]>([]);
   const [connectionState, setConnectionState] = useState<Ably.ConnectionState>("initialized");
@@ -346,10 +333,10 @@ export default function RealtimeSettlementPage() {
         }
       }
 
-      setSyncErrorMessage(lastError || "재동기화에 실패했습니다.");
+      setSyncErrorMessage(lastError || copy.settlement.errors.resyncFailed);
       setIsSyncing(false);
     },
-    [upsertRealtimeEvents, updateCursor],
+    [copy, upsertRealtimeEvents, updateCursor],
   );
 
   useEffect(() => {
@@ -496,35 +483,35 @@ export default function RealtimeSettlementPage() {
       latestStore:
         sortedEvents[0]?.data.store?.name ||
         sortedEvents[0]?.data.store?.code ||
-        "Unknown",
+        copy.common.unknownStore,
     };
-  }, [sortedEvents]);
+  }, [copy.common.unknownStore, sortedEvents]);
 
   const metricCards = [
     {
       key: "total",
-      title: "정산 이벤트",
-      value: summary.totalEvents.toLocaleString("ko-KR"),
-      sub: "Settlement 관련 수신",
+      title: copy.settlement.totalEventsTitle,
+      value: summary.totalEvents.toLocaleString(copy.numberLocale),
+      sub: copy.settlement.totalEventsSub,
       tone: "emerald",
     },
     {
       key: "usdt",
-      title: "총 정산 USDT",
+      title: copy.settlement.totalUsdtTitle,
       value: `${formatUsdt(summary.totalUsdt)} USDT`,
-      sub: "온체인 정산 규모",
+      sub: copy.settlement.totalUsdtSub,
       tone: "cyan",
     },
     {
       key: "krw",
-      title: "총 정산 KRW",
-      value: `${formatKrw(summary.totalKrw)} KRW`,
-      sub: "원화 환산 합계",
+      title: copy.settlement.totalKrwTitle,
+      value: `${formatKrw(summary.totalKrw, copy.numberLocale)} KRW`,
+      sub: copy.settlement.totalKrwSub,
       tone: "slate",
     },
     {
       key: "coverage",
-      title: "해시 추적률",
+      title: copy.settlement.hashCoverageTitle,
       value: `${summary.txCoverage.toFixed(1)}%`,
       sub: `Escrow ${summary.escrowCoverage.toFixed(1)}%`,
       tone: "amber",
@@ -572,10 +559,10 @@ export default function RealtimeSettlementPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-emerald-100">
-              Settlement Realtime Dashboard
+              {copy.settlement.title}
             </h1>
             <p className="mt-1 text-sm text-slate-300">
-              BuyOrder 중 paymentSettled 완료 및 정산 참조값이 있는 이벤트만 실시간으로 표시합니다.
+              {copy.settlement.description}
             </p>
             <p className="mt-1 text-xs text-emerald-300/90">
               Channel: <span className="font-mono">{BUYORDER_STATUS_ABLY_CHANNEL}</span> / Event:{" "}
@@ -588,22 +575,22 @@ export default function RealtimeSettlementPage() {
             onClick={() => void syncFromApi(null)}
             className="rounded-xl border border-emerald-400/45 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100 transition hover:bg-emerald-500/20"
           >
-            재동기화
+            {copy.settlement.resync}
           </button>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Connection <span className="ml-2 font-semibold text-emerald-200">{connectionState}</span>
+            {copy.common.connection} <span className="ml-2 font-semibold text-emerald-200">{connectionState}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Sync <span className="ml-2 font-semibold text-emerald-200">{isSyncing ? "running" : "idle"}</span>
+            {copy.common.sync} <span className="ml-2 font-semibold text-emerald-200">{isSyncing ? copy.common.running : copy.common.idle}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Cursor <span className="ml-2 break-all font-mono text-xs text-emerald-200">{cursor || "-"}</span>
+            {copy.common.cursor} <span className="ml-2 break-all font-mono text-xs text-emerald-200">{cursor || "-"}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Latest Store <span className="ml-2 font-semibold text-emerald-200">{summary.latestStore}</span>
+            {copy.common.latestStore} <span className="ml-2 font-semibold text-emerald-200">{summary.latestStore}</span>
           </div>
         </div>
       </section>
@@ -640,7 +627,7 @@ export default function RealtimeSettlementPage() {
 
       <section className="grid gap-3 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-slate-400">정산 모니터링</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">{copy.settlement.monitorTitle}</p>
           <div className="mt-3 rounded-xl border border-emerald-400/45 bg-emerald-500/10 px-3 py-3 shadow-[inset_0_0_24px_rgba(16,185,129,0.12)]">
             <p className="text-[11px] uppercase tracking-[0.1em] text-emerald-300/90">Settlement USDT</p>
             <p className="mt-1 text-3xl font-bold leading-none tabular-nums text-emerald-100 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">
@@ -651,40 +638,40 @@ export default function RealtimeSettlementPage() {
           <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/70 px-3 py-2">
             <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">Settlement KRW</p>
             <p className="mt-1 text-lg font-semibold tabular-nums text-slate-200">
-              {formatKrw(summary.totalKrw)} KRW
+              {formatKrw(summary.totalKrw, copy.numberLocale)} KRW
             </p>
           </div>
           <div className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-950/35 px-3 py-2 text-xs text-emerald-100">
             <div className="flex items-center justify-between gap-2">
               <span>Settlement TX</span>
-              <span className="font-semibold tabular-nums">{summary.txCount.toLocaleString("ko-KR")}건</span>
+              <span className="font-semibold tabular-nums">{copy.settlement.count(summary.txCount.toLocaleString(copy.numberLocale))}</span>
             </div>
             <div className="mt-1 flex items-center justify-between gap-2 text-emerald-200/90">
               <span>Escrow TX</span>
-              <span className="font-semibold tabular-nums">{summary.escrowTxCount.toLocaleString("ko-KR")}건</span>
+              <span className="font-semibold tabular-nums">{copy.settlement.count(summary.escrowTxCount.toLocaleString(copy.numberLocale))}</span>
             </div>
           </div>
           <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/70 px-3 py-2 text-xs text-slate-400">
-            정산 완료 + 정산 참조 정보가 확인된 이벤트만 추적합니다.
+            {copy.settlement.monitorNote}
           </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-4 py-3">
-            <p className="font-semibold text-slate-100">실시간 정산 이벤트</p>
-            <p className="text-xs text-slate-400">최신 이벤트 순</p>
+            <p className="font-semibold text-slate-100">{copy.settlement.eventListTitle}</p>
+            <p className="text-xs text-slate-400">{copy.settlement.eventListSubtitle}</p>
           </div>
 
           <div className="space-y-2 p-3 md:hidden">
             {sortedEvents.length === 0 && (
               <div className="rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-8 text-center text-sm text-slate-500">
-                아직 수신된 정산 이벤트가 없습니다.
+                {copy.settlement.empty}
               </div>
             )}
 
             {sortedEvents.map((item) => {
               const isHighlighted = item.highlightUntil > Date.now();
-              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs, copy.locale);
               const settlementRefReady = hasSettlementReference(item.data);
               const transactionExplorerUrl = getExplorerTxUrl(item.data.transactionHash);
               const escrowTransactionExplorerUrl = getExplorerTxUrl(item.data.escrowTransactionHash);
@@ -713,14 +700,14 @@ export default function RealtimeSettlementPage() {
                         <span className="ml-1 text-xs font-semibold text-emerald-100">USDT</span>
                       </div>
                       <div className="mt-1 text-[11px] tabular-nums text-slate-400">
-                        {formatKrw(item.data.amountKrw)} KRW
+                        {formatKrw(item.data.amountKrw, copy.numberLocale)} KRW
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-1">
                     <span className="rounded-full border border-emerald-300/65 bg-emerald-500/22 px-2 py-1 text-xs font-semibold text-emerald-50">
-                      정산완료
+                      {copy.settlement.settled}
                     </span>
                     <span
                       className={`rounded-full border px-2 py-1 text-xs font-medium ${
@@ -729,18 +716,18 @@ export default function RealtimeSettlementPage() {
                           : "border-amber-300/55 bg-amber-500/16 text-amber-100"
                       }`}
                     >
-                      {settlementRefReady ? "참조확인" : "참조대기"}
+                      {settlementRefReady ? copy.settlement.referenceReady : copy.settlement.referencePending}
                     </span>
                     {isHighlighted && (
                       <span className="ml-auto rounded-md border border-emerald-400/40 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-100">
-                        NEW
+                        {copy.common.new}
                       </span>
                     )}
                   </div>
 
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">구매자</p>
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">{copy.settlement.buyer}</p>
                       <p className="mt-1 text-sm text-slate-100">{maskName(item.data.buyerName)}</p>
                       <p className="mt-1 font-mono text-[11px] text-emerald-200" title={item.data.buyerWalletAddress || ""}>
                         {formatShortWalletAddress(item.data.buyerWalletAddress)}
@@ -751,7 +738,7 @@ export default function RealtimeSettlementPage() {
                     </div>
 
                     <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">스토어</p>
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">{copy.settlement.store}</p>
                       {item.data.store ? (
                         <div className="mt-1 flex min-w-0 items-center gap-2">
                           {item.data.store.logo ? (
@@ -829,29 +816,29 @@ export default function RealtimeSettlementPage() {
             <table className="min-w-[1840px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">
-                  <th className="w-[220px] px-3 py-2">시간</th>
-                  <th className="w-[220px] px-3 py-2">정산 상태</th>
-                  <th className="w-[240px] px-3 py-2 text-right">정산 금액</th>
+                  <th className="w-[220px] px-3 py-2">{copy.settlement.table.time}</th>
+                  <th className="w-[220px] px-3 py-2">{copy.settlement.table.status}</th>
+                  <th className="w-[240px] px-3 py-2 text-right">{copy.settlement.table.amount}</th>
                   <th className="w-[430px] px-3 py-2">Settlement Hash</th>
-                  <th className="w-[240px] px-3 py-2">구매자</th>
-                  <th className="w-[300px] px-3 py-2">스토어</th>
-                  <th className="w-[420px] px-3 py-2">정산 추적</th>
+                  <th className="w-[240px] px-3 py-2">{copy.settlement.table.buyer}</th>
+                  <th className="w-[300px] px-3 py-2">{copy.settlement.table.store}</th>
+                  <th className="w-[420px] px-3 py-2">{copy.settlement.table.trace}</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedEvents.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
-                      아직 수신된 정산 이벤트가 없습니다.
+                      {copy.settlement.empty}
                     </td>
                   </tr>
                 )}
 
                 {sortedEvents.map((item) => {
-                  const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
-                  const toLabel = getStatusLabel(item.data.statusTo);
+                  const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom, copy) : copy.common.initial;
+                  const toLabel = getStatusLabel(item.data.statusTo, copy);
                   const isHighlighted = item.highlightUntil > Date.now();
-                  const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                  const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs, copy.locale);
                   const settlementRefReady = hasSettlementReference(item.data);
                   const transactionExplorerUrl = getExplorerTxUrl(item.data.transactionHash);
                   const escrowTransactionExplorerUrl = getExplorerTxUrl(item.data.escrowTransactionHash);
@@ -874,7 +861,7 @@ export default function RealtimeSettlementPage() {
                         <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
                         {isHighlighted && (
                           <span className="mt-1 inline-flex rounded-md border border-emerald-400/40 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-100">
-                            NEW
+                            {copy.common.new}
                           </span>
                         )}
                       </td>
@@ -891,11 +878,11 @@ export default function RealtimeSettlementPage() {
                                 : "border-amber-300/55 bg-amber-500/16 text-amber-100"
                             }`}
                           >
-                            {settlementRefReady ? "참조확인" : "참조대기"}
+                            {settlementRefReady ? copy.settlement.referenceReady : copy.settlement.referencePending}
                           </span>
                         </div>
                         <div className="mt-2 text-xs text-slate-400">
-                          이전 상태: <span className="text-slate-300">{fromLabel}</span>
+                          {copy.settlement.previousStatus} <span className="text-slate-300">{fromLabel}</span>
                         </div>
                       </td>
 
@@ -904,7 +891,7 @@ export default function RealtimeSettlementPage() {
                           {formatUsdt(item.data.amountUsdt)} USDT
                         </div>
                         <div className="mt-1 text-sm text-slate-300">
-                          {formatKrw(item.data.amountKrw)} KRW
+                          {formatKrw(item.data.amountKrw, copy.numberLocale)} KRW
                         </div>
                       </td>
 

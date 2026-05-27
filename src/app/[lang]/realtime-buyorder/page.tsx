@@ -12,6 +12,7 @@ import {
   type BuyOrderStatusRealtimeEvent,
 } from "@lib/ably/constants";
 import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
+import { getRealtimeCopy, type RealtimeCopy } from "../realtime.assets";
 
 type RealtimeItem = {
   id: string;
@@ -172,14 +173,14 @@ const BUYORDER_LIST_STATUS_SET = new Set([
   "cancelled",
   "paymentSettled",
 ]);
-const BUYORDER_LIST_STATUS_OPTIONS: Array<{ value: BuyOrderListStatusFilter; label: string }> = [
-  { value: "all", label: "전체 상태" },
-  { value: "ordered", label: "주문접수" },
-  { value: "accepted", label: "매칭완료" },
-  { value: "paymentRequested", label: "결제요청" },
-  { value: "paymentConfirmed", label: "결제완료" },
-  { value: "cancelled", label: "취소" },
-  { value: "paymentSettled", label: "정산완료" },
+const BUYORDER_LIST_STATUS_OPTIONS: BuyOrderListStatusFilter[] = [
+  "all",
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+  "cancelled",
+  "paymentSettled",
 ];
 
 function isPaymentConfirmedStatus(status: string | null | undefined): boolean {
@@ -202,23 +203,8 @@ function toTimestamp(value: string | null | undefined): number {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
-function getStatusLabel(status: string | null | undefined): string {
-  switch (status) {
-    case "ordered":
-      return "주문접수";
-    case "accepted":
-      return "매칭완료";
-    case "paymentRequested":
-      return "결제요청";
-    case "paymentConfirmed":
-      return "결제완료";
-    case "cancelled":
-      return "취소";
-    case "paymentSettled":
-      return "정산완료";
-    default:
-      return String(status || "-");
-  }
+function getStatusLabel(status: string | null | undefined, copy: RealtimeCopy): string {
+  return copy.statusLabels[status as keyof RealtimeCopy["statusLabels"]] || String(status || "-");
 }
 
 function getStatusClassName(status: string | null | undefined): string {
@@ -268,8 +254,8 @@ function getActionDockNoticeClassName(tone: ActionDockNoticeTone): string {
   }
 }
 
-function formatKrw(value: number): string {
-  return Number(value || 0).toLocaleString("ko-KR");
+function formatKrw(value: number, locale: string): string {
+  return Number(value || 0).toLocaleString(locale);
 }
 
 function formatUsdt(value: number): string {
@@ -372,8 +358,8 @@ function getKstDateKey(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function getKstDateLabel(referenceDate: Date): string {
-  return new Intl.DateTimeFormat("ko-KR", {
+function getKstDateLabel(referenceDate: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "Asia/Seoul",
     year: "numeric",
     month: "long",
@@ -479,6 +465,7 @@ function useCountUpValue(targetValue: number, fractionDigits = 0): number {
 export default function RealtimeBuyOrderPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
+  const copy = useMemo(() => getRealtimeCopy(lang), [lang]);
 
   const [events, setEvents] = useState<RealtimeItem[]>([]);
   const [jackpotBursts, setJackpotBursts] = useState<JackpotBurst[]>([]);
@@ -581,7 +568,7 @@ export default function RealtimeBuyOrderPage() {
     const burst: JackpotBurst = {
       id: burstId,
       amountUsdt: Number(event.amountUsdt || 0),
-      storeLabel: event.store?.name || event.store?.code || "Unknown Store",
+      storeLabel: event.store?.name || event.store?.code || copy.common.unknownStore,
     };
 
     setJackpotBursts((previous) => [...previous.slice(-(JACKPOT_MAX_ACTIVE_BURSTS - 1)), burst]);
@@ -592,7 +579,7 @@ export default function RealtimeBuyOrderPage() {
     }, JACKPOT_BURST_DURATION_MS);
 
     jackpotTimerMapRef.current.set(burstId, timer);
-  }, [registerJackpotTrigger]);
+  }, [copy.common.unknownStore, registerJackpotTrigger]);
 
   const partyConfettiBlueprint = useMemo(() => {
     const colors = [
@@ -797,10 +784,10 @@ export default function RealtimeBuyOrderPage() {
         }
       }
 
-      setSyncErrorMessage(lastError || "재동기화에 실패했습니다.");
+      setSyncErrorMessage(lastError || copy.buyorder.errors.resyncFailed);
       setIsSyncing(false);
     },
-    [upsertRealtimeEvents, updateCursor],
+    [copy, upsertRealtimeEvents, updateCursor],
   );
 
   const fetchTodaySummary = useCallback(async () => {
@@ -831,10 +818,10 @@ export default function RealtimeBuyOrderPage() {
       setTodaySummary(nextSummary);
       setTodaySummaryErrorMessage(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "오늘 누적 집계 조회 실패";
+      const message = error instanceof Error ? error.message : copy.buyorder.errors.todaySummaryFailed;
       setTodaySummaryErrorMessage(message);
     }
-  }, []);
+  }, [copy]);
 
   const fetchPendingBuyOrders = useCallback(async () => {
     try {
@@ -917,10 +904,10 @@ export default function RealtimeBuyOrderPage() {
       setPendingBuyOrdersUpdatedAt(data?.updatedAt ? String(data.updatedAt) : new Date().toISOString());
       setPendingBuyOrdersErrorMessage(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "진행중 주문 조회 실패";
+      const message = error instanceof Error ? error.message : copy.buyorder.errors.pendingFailed;
       setPendingBuyOrdersErrorMessage(message);
     }
-  }, []);
+  }, [copy]);
 
   const fetchBuyOrderList = useCallback(async () => {
     if (buyOrderListFetchInFlightRef.current) {
@@ -1025,13 +1012,13 @@ export default function RealtimeBuyOrderPage() {
       setBuyOrderListUpdatedAt(data?.updatedAt ? String(data.updatedAt) : new Date().toISOString());
       setBuyOrderListErrorMessage(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "구매주문 목록 조회 실패";
+      const message = error instanceof Error ? error.message : copy.buyorder.errors.listFailed;
       setBuyOrderListErrorMessage(message);
     } finally {
       buyOrderListFetchInFlightRef.current = false;
       setIsBuyOrderListLoading(false);
     }
-  }, [buyOrderListPage, buyOrderListQuery, buyOrderListStatusFilter, buyOrderListStoreCodeFilter]);
+  }, [buyOrderListPage, buyOrderListQuery, buyOrderListStatusFilter, buyOrderListStoreCodeFilter, copy]);
 
   const fetchBuyOrderStoreOptions = useCallback(async () => {
     try {
@@ -1097,10 +1084,10 @@ export default function RealtimeBuyOrderPage() {
       setSellerWalletBalancesUpdatedAt(data?.updatedAt ? String(data.updatedAt) : new Date().toISOString());
       setSellerWalletBalancesErrorMessage(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "판매자 지갑 잔고 조회 실패";
+      const message = error instanceof Error ? error.message : copy.buyorder.errors.sellerWalletFailed;
       setSellerWalletBalancesErrorMessage(message);
     }
-  }, []);
+  }, [copy]);
 
   const fetchManualAdminSession = useCallback(async () => {
     setIsManualAdminSessionLoading(true);
@@ -1130,12 +1117,12 @@ export default function RealtimeBuyOrderPage() {
       });
       setActionDockNotice({
         tone: "error",
-        message: "수동입금확인 관리자 상태를 불러오지 못했습니다.",
+        message: copy.buyorder.manual.adminSessionFetchFailed,
       });
     } finally {
       setIsManualAdminSessionLoading(false);
     }
-  }, []);
+  }, [copy]);
 
   const handleBuyOrderListSearchSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -1182,7 +1169,7 @@ export default function RealtimeBuyOrderPage() {
     if (!password) {
       setActionDockNotice({
         tone: "error",
-        message: "관리자 비밀번호를 입력해주세요.",
+        message: copy.buyorder.manual.passwordRequired,
       });
       return;
     }
@@ -1208,18 +1195,18 @@ export default function RealtimeBuyOrderPage() {
       setManualAdminPassword("");
       setActionDockNotice({
         tone: "success",
-        message: "수동입금확인 잠금이 해제되었습니다.",
+        message: copy.buyorder.manual.unlocked,
       });
       await fetchManualAdminSession();
     } catch (error) {
       setActionDockNotice({
         tone: "error",
-        message: error instanceof Error ? error.message : "수동입금확인 잠금 해제에 실패했습니다.",
+        message: error instanceof Error ? error.message : copy.buyorder.manual.unlockFailed,
       });
     } finally {
       setIsManualAdminSessionLoading(false);
     }
-  }, [fetchManualAdminSession, manualAdminPassword]);
+  }, [copy, fetchManualAdminSession, manualAdminPassword]);
 
   const handleManualAdminLogout = useCallback(async () => {
     setIsManualAdminSessionLoading(true);
@@ -1233,24 +1220,24 @@ export default function RealtimeBuyOrderPage() {
       setSelectedManualDepositIds([]);
       setActionDockNotice({
         tone: "info",
-        message: "수동입금확인 잠금을 종료했습니다.",
+        message: copy.buyorder.manual.lockedOut,
       });
       await fetchManualAdminSession();
     } catch (error) {
       setActionDockNotice({
         tone: "error",
-        message: "로그아웃 처리에 실패했습니다.",
+        message: copy.buyorder.manual.logoutFailed,
       });
     } finally {
       setIsManualAdminSessionLoading(false);
     }
-  }, [fetchManualAdminSession]);
+  }, [copy, fetchManualAdminSession]);
 
   const loadManualConfirmOptions = useCallback(async (orderId: string) => {
     if (!manualAdminSession.enabled) {
       setActionDockNotice({
         tone: "error",
-        message: "REALTIME_BUYORDER_ADMIN_PASSWORD 설정이 없어 수동입금확인이 비활성화되어 있습니다.",
+        message: copy.buyorder.manual.disabled,
       });
       return;
     }
@@ -1258,7 +1245,7 @@ export default function RealtimeBuyOrderPage() {
     if (!manualAdminSession.authenticated) {
       setActionDockNotice({
         tone: "info",
-        message: "Action Dock에서 관리자 잠금을 먼저 해제해주세요.",
+        message: copy.buyorder.manual.unlockFirst,
       });
       return;
     }
@@ -1326,7 +1313,7 @@ export default function RealtimeBuyOrderPage() {
 
       setManualConfirmPayload(nextPayload);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "입금 후보를 불러오지 못했습니다.";
+      const message = error instanceof Error ? error.message : copy.buyorder.manual.candidateFetchFailed;
       setManualConfirmErrorMessage(message);
       setActionDockNotice({
         tone: "error",
@@ -1335,7 +1322,7 @@ export default function RealtimeBuyOrderPage() {
     } finally {
       setManualConfirmLoadingOrderId(null);
     }
-  }, [fetchManualAdminSession, manualAdminSession.authenticated, manualAdminSession.enabled]);
+  }, [copy, fetchManualAdminSession, manualAdminSession.authenticated, manualAdminSession.enabled]);
 
   const closeManualConfirmModal = useCallback(() => {
     if (manualConfirmSubmittingOrderId) {
@@ -1365,7 +1352,7 @@ export default function RealtimeBuyOrderPage() {
     const selectedTotalAmount = selectedDeposits.reduce((sum, deposit) => sum + deposit.amount, 0);
 
     if (selectedManualDepositIds.length > 0 && selectedTotalAmount !== currentPayload.order.krwAmount) {
-      setManualConfirmErrorMessage("선택한 입금 합계와 주문 금액이 일치해야 완료할 수 있습니다.");
+      setManualConfirmErrorMessage(copy.buyorder.manual.amountMismatch);
       return;
     }
 
@@ -1402,10 +1389,10 @@ export default function RealtimeBuyOrderPage() {
         tone: unmatchedCount > 0 ? "info" : "success",
         message:
           unmatchedCount > 0
-            ? `주문을 완료했고 입금 ${matchedCount}건만 매칭되었습니다. 미매칭 ${unmatchedCount}건은 별도 확인이 필요합니다.`
+            ? copy.buyorder.manual.partialSuccess(matchedCount, unmatchedCount)
             : selectedManualDepositIds.length > 0
-              ? `주문을 완료하고 입금 ${matchedCount}건을 매칭했습니다.`
-              : "주문을 수동으로 결제완료 처리했습니다.",
+              ? copy.buyorder.manual.matchedSuccess(matchedCount)
+              : copy.buyorder.manual.manualSuccess,
       });
 
       setManualConfirmModalOpen(false);
@@ -1419,7 +1406,7 @@ export default function RealtimeBuyOrderPage() {
         syncFromApi(),
       ]);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "수동입금확인 처리에 실패했습니다.";
+      const message = error instanceof Error ? error.message : copy.buyorder.manual.submitFailed;
       setManualConfirmErrorMessage(message);
       setActionDockNotice({
         tone: "error",
@@ -1434,6 +1421,7 @@ export default function RealtimeBuyOrderPage() {
     fetchPendingBuyOrders,
     fetchSellerWalletBalances,
     fetchTodaySummary,
+    copy,
     manualConfirmPayload,
     selectedManualDepositIds,
     syncFromApi,
@@ -1813,7 +1801,10 @@ export default function RealtimeBuyOrderPage() {
   const animatedTodayConfirmedAmountUsdt = useCountUpValue(todayTotals.confirmedAmountUsdt, 3);
   const animatedTodayPgFeeAmountKrw = useCountUpValue(todayTotals.pgFeeAmountKrw);
   const animatedTodayPgFeeAmountUsdt = useCountUpValue(todayTotals.pgFeeAmountUsdt, 3);
-  const todayDateLabelKst = useMemo(() => getKstDateLabel(new Date(countdownNowMs)), [countdownNowMs]);
+  const todayDateLabelKst = useMemo(
+    () => getKstDateLabel(new Date(countdownNowMs), copy.numberLocale),
+    [copy.numberLocale, countdownNowMs],
+  );
   const remainingMsToday = useMemo(() => getRemainingKstMs(countdownNowMs), [countdownNowMs]);
   const countdownLabel = useMemo(() => formatCountdownHms(remainingMsToday), [remainingMsToday]);
   const remainingDayRatio = Math.max(0, Math.min(100, (remainingMsToday / ONE_DAY_MS) * 100));
@@ -1836,8 +1827,8 @@ export default function RealtimeBuyOrderPage() {
     return buyOrderStoreOptions.find((store) => store.storeCode === buyOrderListStoreCodeFilter) || null;
   }, [buyOrderListStoreCodeFilter, buyOrderStoreOptions]);
   const manualAdminSessionExpiryInfo = useMemo(
-    () => getRelativeTimeInfo(manualAdminSession.expiresAt, nowMs),
-    [manualAdminSession.expiresAt, nowMs],
+    () => getRelativeTimeInfo(manualAdminSession.expiresAt, nowMs, copy.locale),
+    [copy.locale, manualAdminSession.expiresAt, nowMs],
   );
   const selectedManualDeposits = useMemo(() => {
     if (!manualConfirmPayload) {
@@ -1864,7 +1855,7 @@ export default function RealtimeBuyOrderPage() {
           <div className="fixed inset-0 z-[2600] flex items-center justify-center p-3">
             <button
               type="button"
-              aria-label="Close manual confirm modal"
+              aria-label={copy.buyorder.manual.ariaClose}
               onClick={closeManualConfirmModal}
               className="absolute inset-0 bg-slate-950/65 backdrop-blur-[2px]"
             />
@@ -1874,11 +1865,11 @@ export default function RealtimeBuyOrderPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700/80">
-                      Manual Confirm
+                      {copy.buyorder.manual.eyebrow}
                     </p>
-                    <h2 className="mt-1 text-lg font-semibold text-slate-950">수동입금확인</h2>
+                    <h2 className="mt-1 text-lg font-semibold text-slate-950">{copy.buyorder.manual.title}</h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      지갑 연결 없이 `paymentRequested` 주문을 결제완료로 처리하고, 필요한 경우 입금내역을 수동 매칭합니다.
+                      {copy.buyorder.manual.description}
                     </p>
                   </div>
 
@@ -1891,7 +1882,7 @@ export default function RealtimeBuyOrderPage() {
                       disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
                       className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      새로고침
+                      {copy.buyorder.manual.refresh}
                     </button>
                     <button
                       type="button"
@@ -1899,7 +1890,7 @@ export default function RealtimeBuyOrderPage() {
                       disabled={Boolean(manualConfirmSubmittingOrderId)}
                       className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      닫기
+                      {copy.buyorder.manual.close}
                     </button>
                   </div>
                 </div>
@@ -1908,7 +1899,7 @@ export default function RealtimeBuyOrderPage() {
               <div className="flex-1 overflow-y-auto bg-slate-50/80 px-4 py-4">
                 {manualConfirmLoadingOrderId && !manualConfirmPayload && (
                   <div className="rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center">
-                    <p className="text-sm font-semibold text-slate-900">입금 후보를 불러오는 중입니다.</p>
+                    <p className="text-sm font-semibold text-slate-900">{copy.buyorder.manual.loadingCandidates}</p>
                     <p className="mt-1 font-mono text-xs text-slate-500">orderId={manualConfirmLoadingOrderId}</p>
                   </div>
                 )}
@@ -1937,47 +1928,48 @@ export default function RealtimeBuyOrderPage() {
                             </p>
                           </div>
                           <span className={`ml-auto rounded-full px-2.5 py-1 text-[11px] font-semibold ${getStatusClassNameOnLight(manualConfirmPayload.order.status)}`}>
-                            {getStatusLabel(manualConfirmPayload.order.status)}
+                            {getStatusLabel(manualConfirmPayload.order.status, copy)}
                           </span>
                         </div>
 
                         <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <dt className="text-slate-500">구매자</dt>
+                            <dt className="text-slate-500">{copy.buyorder.manual.buyer}</dt>
                             <dd className="mt-1 font-semibold text-slate-900">
                               {manualConfirmPayload.order.buyerName || "-"}
                             </dd>
                           </div>
                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <dt className="text-slate-500">입금계좌</dt>
+                            <dt className="text-slate-500">{copy.buyorder.manual.depositAccount}</dt>
                             <dd className="mt-1 font-mono font-semibold text-slate-900">
                               {manualConfirmPayload.order.buyerAccountNumber || "-"}
                             </dd>
                           </div>
                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <dt className="text-slate-500">결제수단</dt>
+                            <dt className="text-slate-500">{copy.buyorder.manual.paymentMethod}</dt>
                             <dd className="mt-1 font-semibold uppercase text-slate-900">
                               {manualConfirmPayload.order.paymentMethod || "-"}
                             </dd>
                           </div>
                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <dt className="text-slate-500">주문금액</dt>
+                            <dt className="text-slate-500">{copy.buyorder.manual.orderAmount}</dt>
                             <dd className="mt-1 font-mono text-[15px] font-bold text-slate-950">
-                              {formatKrw(manualConfirmPayload.order.krwAmount)} KRW
+                              {formatKrw(manualConfirmPayload.order.krwAmount, copy.numberLocale)} KRW
                             </dd>
                           </div>
                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <dt className="text-slate-500">전송예정</dt>
+                            <dt className="text-slate-500">{copy.buyorder.manual.transferScheduled}</dt>
                             <dd className="mt-1 font-mono text-[15px] font-bold text-cyan-700">
                               {formatUsdt(manualConfirmPayload.order.usdtAmount)} USDT
                             </dd>
                           </div>
                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <dt className="text-slate-500">결제요청시각</dt>
+                            <dt className="text-slate-500">{copy.buyorder.manual.paymentRequestedAt}</dt>
                             <dd className="mt-1 text-[11px] font-semibold text-slate-900">
                               {getRelativeTimeInfo(
                                 manualConfirmPayload.order.paymentRequestedAt || manualConfirmPayload.order.createdAt,
                                 nowMs,
+                                copy.locale,
                               ).absoluteLabel}
                             </dd>
                           </div>
@@ -1985,17 +1977,17 @@ export default function RealtimeBuyOrderPage() {
                       </div>
 
                       <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-sm font-semibold text-slate-950">판매자 입금통장</p>
+                        <p className="text-sm font-semibold text-slate-950">{copy.buyorder.manual.sellerBankAccount}</p>
                         <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3">
-                          <p className="text-xs text-emerald-700">입금은행</p>
+                          <p className="text-xs text-emerald-700">{copy.buyorder.manual.depositBank}</p>
                           <p className="mt-1 text-sm font-semibold text-emerald-950">
                             {manualConfirmPayload.order.sellerBankName || "-"}
                           </p>
-                          <p className="mt-3 text-xs text-emerald-700">계좌번호</p>
+                          <p className="mt-3 text-xs text-emerald-700">{copy.buyorder.manual.accountNumber}</p>
                           <p className="mt-1 font-mono text-base font-bold text-emerald-950">
                             {manualConfirmPayload.order.sellerAccountNumber || "-"}
                           </p>
-                          <p className="mt-3 text-xs text-emerald-700">예금주</p>
+                          <p className="mt-3 text-xs text-emerald-700">{copy.buyorder.manual.accountHolder}</p>
                           <p className="mt-1 text-sm font-semibold text-emerald-950">
                             {manualConfirmPayload.order.sellerAccountHolder || "-"}
                           </p>
@@ -2003,13 +1995,13 @@ export default function RealtimeBuyOrderPage() {
 
                         <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
                           <p>
-                            추천 조회일:
+                            {copy.buyorder.manual.recommendedDate}
                             <span className="ml-1 font-mono text-slate-900">
                               {manualConfirmPayload.recommendedFromDate || "-"}
                             </span>
                           </p>
                           <p className="mt-1">
-                            선택하지 않고 완료하면 입금내역 매칭 없이 주문만 결제완료 처리합니다.
+                            {copy.buyorder.manual.noSelectionHelp}
                           </p>
                         </div>
                       </div>
@@ -2018,9 +2010,9 @@ export default function RealtimeBuyOrderPage() {
                     <section className="rounded-2xl border border-slate-200 bg-white">
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <div>
-                          <p className="text-sm font-semibold text-slate-950">입금 후보 목록</p>
+                          <p className="text-sm font-semibold text-slate-950">{copy.buyorder.manual.depositCandidates}</p>
                           <p className="mt-1 text-xs text-slate-500">
-                            amount/name match를 우선 정렬했습니다. 다중 선택 가능, 합계가 주문금액과 같아야 매칭됩니다.
+                            {copy.buyorder.manual.depositCandidatesHelp}
                           </p>
                         </div>
                         <button
@@ -2031,14 +2023,14 @@ export default function RealtimeBuyOrderPage() {
                           disabled={selectedManualDepositIds.length === 0}
                           className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          선택해제
+                          {copy.buyorder.manual.clearSelection}
                         </button>
                       </div>
 
                       <div className="max-h-[340px] overflow-y-auto px-4 py-3">
                         {manualConfirmPayload.deposits.length === 0 && (
                           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                            추천 조건으로 조회된 미매칭 입금내역이 없습니다. 필요하면 선택 없이 완료할 수 있습니다.
+                            {copy.buyorder.manual.emptyDeposits}
                           </div>
                         )}
 
@@ -2078,26 +2070,26 @@ export default function RealtimeBuyOrderPage() {
                                       </span>
                                       {deposit.isAmountMatch && (
                                         <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
-                                          금액일치
+                                          {copy.buyorder.manual.amountMatched}
                                         </span>
                                       )}
                                       {deposit.isNameMatch && (
                                         <span className="rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-800">
-                                          입금자일치
+                                          {copy.buyorder.manual.nameMatched}
                                         </span>
                                       )}
                                     </div>
                                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                                       <span className="font-mono">{deposit.bankAccountNumber || "-"}</span>
-                                      <span>{getRelativeTimeInfo(deposit.transactionDate, nowMs).absoluteLabel}</span>
-                                      <span className="font-mono">bal {formatKrw(deposit.balance)} KRW</span>
-                                      {deposit.memo ? <span>memo {deposit.memo}</span> : null}
+                                      <span>{getRelativeTimeInfo(deposit.transactionDate, nowMs, copy.locale).absoluteLabel}</span>
+                                      <span className="font-mono">{copy.buyorder.manual.balancePrefix} {formatKrw(deposit.balance, copy.numberLocale)} KRW</span>
+                                      {deposit.memo ? <span>{copy.buyorder.manual.memoPrefix} {deposit.memo}</span> : null}
                                     </div>
                                   </div>
 
                                   <div className="text-right">
                                     <p className="font-mono text-[15px] font-bold text-slate-950">
-                                      {formatKrw(deposit.amount)}
+                                      {formatKrw(deposit.amount, copy.numberLocale)}
                                     </p>
                                     <p className="mt-1 font-mono text-[10px] text-slate-400">{deposit.id}</p>
                                   </div>
@@ -2116,9 +2108,9 @@ export default function RealtimeBuyOrderPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-3 text-sm">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">선택 입금 합계</p>
+                      <p className="text-[11px] text-slate-500">{copy.buyorder.manual.selectedDepositTotal}</p>
                       <p className="mt-0.5 font-mono text-base font-bold text-slate-950">
-                        {formatKrw(selectedManualDepositTotal)} KRW
+                        {formatKrw(selectedManualDepositTotal, copy.numberLocale)} KRW
                       </p>
                     </div>
                     <div className={`rounded-2xl border px-3 py-2 ${
@@ -2126,13 +2118,13 @@ export default function RealtimeBuyOrderPage() {
                         ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                         : "border-amber-200 bg-amber-50 text-amber-800"
                     }`}>
-                      <p className="text-[11px]">주문금액 일치 여부</p>
+                      <p className="text-[11px]">{copy.buyorder.manual.amountMatchStatus}</p>
                       <p className="mt-0.5 font-semibold">
                         {selectedManualDepositIds.length === 0
-                          ? "선택 없음"
+                          ? copy.buyorder.manual.noSelection
                           : manualDepositAmountMatches
-                            ? "일치"
-                            : "불일치"}
+                            ? copy.buyorder.manual.matched
+                            : copy.buyorder.manual.mismatched}
                       </p>
                     </div>
                     {manualConfirmErrorMessage && (
@@ -2148,7 +2140,7 @@ export default function RealtimeBuyOrderPage() {
                     disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
                     className="rounded-full bg-[linear-gradient(135deg,#0f766e,#2563eb)] px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_28px_-18px_rgba(37,99,235,0.6)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {manualConfirmSubmittingOrderId ? "처리중..." : "결제완료 처리"}
+                    {manualConfirmSubmittingOrderId ? copy.buyorder.manual.submitting : copy.buyorder.manual.submit}
                   </button>
                 </div>
               </div>
@@ -2232,7 +2224,7 @@ export default function RealtimeBuyOrderPage() {
               </div>
 
               <div className="party-center">
-                <p className="party-title">PAYMENT CONFIRMED</p>
+                <p className="party-title">{copy.statusLabels.paymentConfirmed.toUpperCase()}</p>
                 <p className="party-subtitle">{formatUsdt(burst.amountUsdt)} USDT · {burst.storeLabel}</p>
               </div>
             </div>
@@ -2250,7 +2242,7 @@ export default function RealtimeBuyOrderPage() {
       <section className="overflow-hidden rounded-xl border border-slate-700/70 bg-[linear-gradient(160deg,rgba(14,116,144,0.22),rgba(2,6,23,0.96)_48%)] p-4 shadow-[0_14px_38px_-24px_rgba(6,182,212,0.35)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-cyan-100">BuyOrder Realtime Dashboard</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-cyan-100">{copy.buyorder.title}</h1>
           </div>
 
           <div className="w-full max-w-[920px] space-y-1.5">
@@ -2261,24 +2253,24 @@ export default function RealtimeBuyOrderPage() {
                 className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSyncing}
               >
-                {isSyncing ? "재동기화 중..." : "재동기화"}
+                {isSyncing ? copy.buyorder.resyncing : copy.buyorder.resync}
               </button>
             </div>
 
             <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
               <article className="relative overflow-hidden rounded-lg border border-violet-300/35 bg-gradient-to-br from-indigo-500/22 via-violet-500/14 to-slate-950/72 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(99,102,241,0.75)]">
                 <div className="pointer-events-none absolute -right-10 -top-8 h-24 w-24 rounded-full bg-violet-300/25 blur-2xl" />
-                <p className="relative text-[10px] uppercase tracking-[0.1em] text-violet-100/90">오늘 날짜 (KST)</p>
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-violet-100/90">{copy.buyorder.todayDateKst}</p>
                 <p className="relative mt-1 text-base font-semibold leading-tight text-violet-50">{todayDateLabelKst}</p>
                 <div className="relative mt-1.5 flex items-end justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.1em] text-violet-100/80">오늘 남은 시간</p>
+                    <p className="text-[10px] uppercase tracking-[0.1em] text-violet-100/80">{copy.buyorder.remainingToday}</p>
                     <p className="mt-1 font-mono text-xl font-semibold leading-none tabular-nums text-violet-50 animate-pulse">
                       {countdownLabel}
                     </p>
                   </div>
                   <span className="inline-flex rounded-full border border-violet-300/45 bg-violet-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-violet-50">
-                    COUNTDOWN
+                    {copy.common.countdown}
                   </span>
                 </div>
                 <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-violet-100/30">
@@ -2291,14 +2283,13 @@ export default function RealtimeBuyOrderPage() {
 
               <article className="relative overflow-hidden rounded-lg border border-sky-400/35 bg-gradient-to-br from-sky-500/20 via-cyan-500/12 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(14,165,233,0.75)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-300/20 blur-2xl" />
-                <p className="relative text-[10px] uppercase tracking-[0.1em] text-sky-100/85">오늘 결제완료 거래건수 (KST)</p>
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-sky-100/85">{copy.buyorder.todayConfirmedCountKst}</p>
                 <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-sky-50">
-                  {animatedTodayConfirmedCount.toLocaleString("ko-KR")}
-                  <span className="ml-1 text-xs font-medium text-sky-200/90">건</span>
+                  {copy.buyorder.count(animatedTodayConfirmedCount.toLocaleString(copy.numberLocale))}
                 </p>
                 <div className="relative mt-1 flex items-center justify-end text-[11px]">
                   <span className="inline-flex rounded-full border border-sky-300/40 bg-sky-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-sky-50">
-                    LIVE
+                    {copy.common.live}
                   </span>
                 </div>
                 <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-sky-100/30">
@@ -2311,15 +2302,15 @@ export default function RealtimeBuyOrderPage() {
 
               <article className="relative overflow-hidden rounded-lg border border-emerald-400/35 bg-gradient-to-br from-emerald-500/20 via-emerald-500/12 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(16,185,129,0.75)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-300/20 blur-2xl" />
-                <p className="relative text-[10px] uppercase tracking-[0.1em] text-emerald-100/85">오늘 결제완료 거래금액 (KST)</p>
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-emerald-100/85">{copy.buyorder.todayConfirmedAmountKst}</p>
                 <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-emerald-50">
-                  {formatKrw(animatedTodayConfirmedAmountKrw)}
+                  {formatKrw(animatedTodayConfirmedAmountKrw, copy.numberLocale)}
                   <span className="ml-1 text-xs font-medium text-emerald-200/90">KRW</span>
                 </p>
                 <div className="relative mt-1 flex items-center justify-between text-[11px]">
                   <span className="text-emerald-100/90">{formatUsdt(animatedTodayConfirmedAmountUsdt)} USDT</span>
                   <span className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-emerald-50">
-                    LIVE
+                    {copy.common.live}
                   </span>
                 </div>
                 <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-emerald-100/30">
@@ -2332,9 +2323,9 @@ export default function RealtimeBuyOrderPage() {
 
               <article className="relative overflow-hidden rounded-lg border border-amber-300/45 bg-gradient-to-br from-amber-500/22 via-orange-500/14 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(245,158,11,0.75)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-300/20 blur-2xl" />
-                <p className="relative text-[10px] uppercase tracking-[0.1em] text-amber-100/90">오늘 PG 수수료 (KST)</p>
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-amber-100/90">{copy.buyorder.todayPgFeeKst}</p>
                 <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-amber-50">
-                  {formatKrw(animatedTodayPgFeeAmountKrw)}
+                  {formatKrw(animatedTodayPgFeeAmountKrw, copy.numberLocale)}
                   <span className="ml-1 text-xs font-medium text-amber-200/90">KRW</span>
                 </p>
                 <div className="relative mt-1 flex items-center justify-between text-[11px]">
@@ -2356,35 +2347,35 @@ export default function RealtimeBuyOrderPage() {
 
         <div className="mt-3 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
-            Connection <span className="ml-2 font-semibold text-cyan-200">{connectionState}</span>
+            {copy.common.connection} <span className="ml-2 font-semibold text-cyan-200">{connectionState}</span>
           </div>
           <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
-            Sync <span className="ml-2 font-semibold text-cyan-200">{isSyncing ? "running" : "idle"}</span>
+            {copy.common.sync} <span className="ml-2 font-semibold text-cyan-200">{isSyncing ? copy.common.running : copy.common.idle}</span>
           </div>
           <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
-            Cursor <span className="ml-2 break-all font-mono text-xs text-cyan-200">{cursor || "-"}</span>
+            {copy.common.cursor} <span className="ml-2 break-all font-mono text-xs text-cyan-200">{cursor || "-"}</span>
           </div>
           <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
-            Last Status <span className="ml-2 font-semibold text-cyan-200">{getStatusLabel(summary.latestStatus)}</span>
+            {copy.common.latestStatus} <span className="ml-2 font-semibold text-cyan-200">{getStatusLabel(summary.latestStatus, copy)}</span>
           </div>
         </div>
 
         <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-950/55 px-2.5 py-2">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold text-cyan-100">판매자 지갑 USDT 잔고 (LIVE)</p>
+            <p className="text-[11px] font-semibold text-cyan-100">{copy.buyorder.sellerWalletTitle}</p>
             <p className="text-[10px] text-slate-400">
-              updated {getRelativeTimeInfo(sellerWalletBalancesUpdatedAt, nowMs).relativeLabel}
+              {copy.common.updated} {getRelativeTimeInfo(sellerWalletBalancesUpdatedAt, nowMs, copy.locale).relativeLabel}
             </p>
           </div>
           {sellerWalletBalances.length === 0 && (
             <p className="mt-1 rounded border border-slate-800 bg-slate-900/70 px-2 py-1 text-[11px] text-slate-500">
-              seller.walletAddress 데이터가 없습니다.
+              {copy.buyorder.sellerWalletEmpty}
             </p>
           )}
           {sellerWalletBalances.length > 0 && (
             <div className="mt-1.5 max-h-36 space-y-1 overflow-y-auto pr-1">
               {sellerWalletBalances.map((item, index) => {
-                const latestInfo = getRelativeTimeInfo(item.latestOrderCreatedAt, nowMs);
+                const latestInfo = getRelativeTimeInfo(item.latestOrderCreatedAt, nowMs, copy.locale);
                 return (
                   <div
                     key={`seller-wallet-balance-${item.walletAddress}-${index}`}
@@ -2397,7 +2388,7 @@ export default function RealtimeBuyOrderPage() {
                     <span className="truncate text-right font-mono tabular-nums text-emerald-200">
                       {formatUsdt(item.currentUsdtBalance)} USDT
                     </span>
-                    <span className="truncate text-right text-slate-300">{item.orderCount.toLocaleString("ko-KR")}건</span>
+                    <span className="truncate text-right text-slate-300">{copy.buyorder.count(item.orderCount.toLocaleString(copy.numberLocale))}</span>
                     <span className="truncate text-right text-slate-500" title={latestInfo.absoluteLabel}>
                       {latestInfo.relativeLabel}
                     </span>
@@ -2423,25 +2414,25 @@ export default function RealtimeBuyOrderPage() {
 
       {todaySummaryErrorMessage && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
-          오늘 결제완료 집계 조회 실패: {todaySummaryErrorMessage}
+          {copy.buyorder.errorPrefixes.todaySummary} {todaySummaryErrorMessage}
         </div>
       )}
 
       {pendingBuyOrdersErrorMessage && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
-          진행중 구매주문 목록 조회 실패: {pendingBuyOrdersErrorMessage}
+          {copy.buyorder.errorPrefixes.pending} {pendingBuyOrdersErrorMessage}
         </div>
       )}
 
       {buyOrderListErrorMessage && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
-          구매주문 목록 조회 실패: {buyOrderListErrorMessage}
+          {copy.buyorder.errorPrefixes.list} {buyOrderListErrorMessage}
         </div>
       )}
 
       {sellerWalletBalancesErrorMessage && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
-          판매자 지갑 잔고 조회 실패: {sellerWalletBalancesErrorMessage}
+          {copy.buyorder.errorPrefixes.sellerWallet} {sellerWalletBalancesErrorMessage}
         </div>
       )}
 
@@ -2453,27 +2444,27 @@ export default function RealtimeBuyOrderPage() {
           <div className="relative border-b border-amber-300/40 px-3 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-amber-700/80">Live Pending</p>
-                <p className="mt-0.5 text-sm font-semibold text-amber-950">진행중 구매주문 목록</p>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-amber-700/80">{copy.buyorder.pending.eyebrow}</p>
+                <p className="mt-0.5 text-sm font-semibold text-amber-950">{copy.buyorder.pending.title}</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="rounded border border-amber-400/60 bg-amber-200/65 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
-                  JACKPOT {pendingBuyOrdersTotalCount.toLocaleString("ko-KR")}
+                  JACKPOT {pendingBuyOrdersTotalCount.toLocaleString(copy.numberLocale)}
                 </span>
                 <span className="rounded border border-cyan-400/60 bg-cyan-200/65 px-2 py-0.5 text-[11px] font-semibold text-cyan-900">
-                  REEL {pendingBuyOrders.length.toLocaleString("ko-KR")}
+                  REEL {pendingBuyOrders.length.toLocaleString(copy.numberLocale)}
                 </span>
               </div>
             </div>
             <p className="mt-1 font-mono text-[11px] text-amber-900/70">
-              ordered / accepted / paymentRequested · updated {getRelativeTimeInfo(pendingBuyOrdersUpdatedAt, nowMs).relativeLabel}
+              {copy.buyorder.pending.statusesLine} · {copy.common.updated} {getRelativeTimeInfo(pendingBuyOrdersUpdatedAt, nowMs, copy.locale).relativeLabel}
             </p>
 
             <div className="mt-2 rounded-lg border border-amber-300/55 bg-white/85 p-2 shadow-[inset_0_0_16px_rgba(251,191,36,0.08)]">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-amber-800/80">Action Dock</p>
-                  <p className="mt-0.5 text-xs font-semibold text-amber-950">수동입금확인 관리자 잠금</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-amber-800/80">{copy.buyorder.pending.actionDockEyebrow}</p>
+                  <p className="mt-0.5 text-xs font-semibold text-amber-950">{copy.buyorder.pending.adminLockTitle}</p>
                 </div>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                   manualAdminSession.enabled
@@ -2492,7 +2483,7 @@ export default function RealtimeBuyOrderPage() {
 
               {!manualAdminSession.enabled && (
                 <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-[11px] text-slate-600">
-                  `REALTIME_BUYORDER_ADMIN_PASSWORD` 환경변수를 설정하면 이 화면에서도 지갑 연결 없이 수동입금확인이 가능합니다.
+                  {copy.buyorder.pending.adminDisabledHelp}
                 </p>
               )}
 
@@ -2510,7 +2501,7 @@ export default function RealtimeBuyOrderPage() {
                         void handleManualAdminLogin();
                       }
                     }}
-                    placeholder="관리자 비밀번호"
+                    placeholder={copy.buyorder.pending.passwordPlaceholder}
                     className="h-9 flex-1 rounded-md border border-amber-300/70 bg-white px-3 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-400"
                   />
                   <button
@@ -2521,7 +2512,7 @@ export default function RealtimeBuyOrderPage() {
                     disabled={isManualAdminSessionLoading}
                     className="h-9 rounded-md border border-amber-400/70 bg-amber-100 px-3 text-xs font-semibold text-amber-900 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isManualAdminSessionLoading ? "확인중..." : "잠금해제"}
+                    {isManualAdminSessionLoading ? copy.buyorder.pending.checking : copy.buyorder.pending.unlock}
                   </button>
                 </div>
               )}
@@ -2530,10 +2521,10 @@ export default function RealtimeBuyOrderPage() {
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2">
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold text-emerald-900">
-                      수동입금확인 활성화됨
+                      {copy.buyorder.pending.enabled}
                     </p>
                     <p className="mt-0.5 font-mono text-[10px] text-emerald-700">
-                      session expires {manualAdminSessionExpiryInfo.relativeLabel}
+                      {copy.buyorder.pending.sessionExpires} {manualAdminSessionExpiryInfo.relativeLabel}
                     </p>
                   </div>
                   <button
@@ -2544,7 +2535,7 @@ export default function RealtimeBuyOrderPage() {
                     disabled={isManualAdminSessionLoading}
                     className="rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    잠금종료
+                    {copy.buyorder.pending.logout}
                   </button>
                 </div>
               )}
@@ -2560,14 +2551,14 @@ export default function RealtimeBuyOrderPage() {
           <div className="relative max-h-[780px] space-y-1 overflow-y-auto bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.95)_0px,rgba(255,255,255,0.95)_30px,rgba(255,247,237,0.95)_30px,rgba(255,247,237,0.95)_60px)] p-2">
             {pendingBuyOrders.length === 0 && (
               <div className="rounded-xl border border-amber-300/70 bg-white/95 px-3 py-8 text-center">
-                <p className="font-mono text-xs text-amber-900/85">[IDLE] 슬롯에 올라온 진행중 주문이 없습니다.</p>
+                <p className="font-mono text-xs text-amber-900/85">{copy.buyorder.pending.empty}</p>
               </div>
             )}
 
             {pendingBuyOrders.length > 0 && (
               <div className="space-y-1">
                 {pendingBuyOrders.map((order, index) => {
-                  const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs);
+                  const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs, copy.locale);
                   const lineNo = String(index + 1).padStart(3, "0");
                   const storeLabel = order.storeName || order.storeCode || "-";
                   const buyerLabel = maskName(order.buyerName);
@@ -2590,11 +2581,11 @@ export default function RealtimeBuyOrderPage() {
                           {lineNo}
                         </span>
                         <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(order.status)}`}>
-                          {getStatusLabel(order.status)}
+                          {getStatusLabel(order.status, copy)}
                         </span>
                         {isHighlighted && (
                           <span className="new-record-pill animate-pulse rounded border border-cyan-300 bg-cyan-100 px-1 py-0.5 font-mono text-[9px] font-semibold text-cyan-800">
-                            NEW
+                            {copy.common.new}
                           </span>
                         )}
                       </div>
@@ -2611,7 +2602,7 @@ export default function RealtimeBuyOrderPage() {
 
                       <div className="min-w-0">
                         <p className="truncate font-mono text-[12px] font-bold leading-none tabular-nums text-amber-950">
-                          {formatKrw(order.amountKrw)} KRW
+                          {formatKrw(order.amountKrw, copy.numberLocale)} KRW
                         </p>
                         <p className="mt-0.5 truncate font-mono text-[10px] leading-none text-cyan-700">
                           {formatUsdt(order.amountUsdt)} USDT
@@ -2626,7 +2617,7 @@ export default function RealtimeBuyOrderPage() {
                             onClick={() => {
                               void handleCopyTradeId(order.tradeId);
                             }}
-                            title="tradeId 복사"
+                            title={copy.common.copyTradeId}
                             className={`block max-w-full truncate font-mono text-[10px] underline underline-offset-2 transition ${
                               copied ? "text-emerald-700 decoration-emerald-500" : "text-cyan-700 decoration-cyan-500 hover:text-cyan-900"
                             }`}
@@ -2653,7 +2644,7 @@ export default function RealtimeBuyOrderPage() {
                             disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
                             className="mt-1 inline-flex rounded border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {manualConfirmLoadingOrderId === order.orderId ? "확인중..." : "수동입금"}
+                            {manualConfirmLoadingOrderId === order.orderId ? copy.buyorder.pending.manualChecking : copy.buyorder.pending.manualDepositButton}
                           </button>
                         )}
                       </div>
@@ -2668,13 +2659,13 @@ export default function RealtimeBuyOrderPage() {
         <div className="overflow-hidden rounded-xl border border-slate-300/70 bg-white/95 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.28)]">
           <div className="border-b border-slate-200/80 px-3 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-900">구매주문 목록</p>
+              <p className="text-sm font-semibold text-slate-900">{copy.buyorder.list.title}</p>
               <span className="rounded-md border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                총 {buyOrderListTotalCount.toLocaleString("ko-KR")}건
+                {copy.buyorder.list.total(buyOrderListTotalCount.toLocaleString(copy.numberLocale))}
               </span>
             </div>
             <p className="mt-1 text-[11px] text-slate-500">
-              updated {getRelativeTimeInfo(buyOrderListUpdatedAt, nowMs).relativeLabel}
+              {copy.common.updated} {getRelativeTimeInfo(buyOrderListUpdatedAt, nowMs, copy.locale).relativeLabel}
             </p>
 
             <form
@@ -2690,8 +2681,8 @@ export default function RealtimeBuyOrderPage() {
                 className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-cyan-400"
               >
                 {BUYORDER_LIST_STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                  <option key={option} value={option}>
+                    {option === "all" ? copy.buyorder.list.allStatus : getStatusLabel(option, copy)}
                   </option>
                 ))}
               </select>
@@ -2711,7 +2702,7 @@ export default function RealtimeBuyOrderPage() {
                       style={selectedStoreFilterOption?.storeLogo ? { backgroundImage: `url(${selectedStoreFilterOption.storeLogo})` } : undefined}
                     />
                     <span className="min-w-0 truncate">
-                      {selectedStoreFilterOption?.storeName || selectedStoreFilterOption?.storeCode || "전체 가맹점"}
+                      {selectedStoreFilterOption?.storeName || selectedStoreFilterOption?.storeCode || copy.common.allStores}
                     </span>
                   </span>
                   <span className="ml-1 flex shrink-0 items-center gap-1 font-mono text-[10px] text-slate-400">
@@ -2734,7 +2725,7 @@ export default function RealtimeBuyOrderPage() {
                       >
                         <span className="flex min-w-0 items-center gap-1.5">
                           <span className="h-4 w-4 shrink-0 rounded-full border border-slate-200 bg-slate-100" />
-                          <span className="truncate">전체 가맹점</span>
+                          <span className="truncate">{copy.common.allStores}</span>
                         </span>
                         <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-400">ALL</span>
                       </button>
@@ -2773,21 +2764,21 @@ export default function RealtimeBuyOrderPage() {
                 onChange={(event) => {
                   setBuyOrderListQueryInput(event.target.value);
                 }}
-                placeholder="tradeId/입금자 검색"
+                placeholder={copy.buyorder.list.searchPlaceholder}
                 className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-cyan-400"
               />
               <button
                 type="submit"
                 className="h-8 rounded-md border border-cyan-300 bg-cyan-50 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100"
               >
-                검색
+                {copy.common.search}
               </button>
               <button
                 type="button"
                 onClick={handleBuyOrderListFilterReset}
                 className="h-8 rounded-md border border-slate-300 bg-slate-100 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
               >
-                초기화
+                {copy.common.reset}
               </button>
             </form>
           </div>
@@ -2795,7 +2786,7 @@ export default function RealtimeBuyOrderPage() {
           <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.96))] p-2">
             {buyOrderListItems.length === 0 && (
               <div className="rounded-lg border border-slate-200 bg-white px-3 py-8 text-center text-xs text-slate-500">
-                {isBuyOrderListLoading ? "[LOADING] 목록을 불러오는 중..." : "[EMPTY] 조건에 맞는 주문이 없습니다."}
+                {isBuyOrderListLoading ? copy.buyorder.list.loading : copy.buyorder.list.empty}
               </div>
             )}
 
@@ -2804,7 +2795,7 @@ export default function RealtimeBuyOrderPage() {
                 {buyOrderListItems.map((item, index) => {
                   const storeLabel = item.storeName || item.storeCode || "-";
                   const buyerLabel = maskName(item.buyerName);
-                  const createdAtInfo = getRelativeTimeInfo(item.createdAt, nowMs);
+                  const createdAtInfo = getRelativeTimeInfo(item.createdAt, nowMs, copy.locale);
                   const rowNo = String((buyOrderListPage - 1) * BUYORDER_LIST_PAGE_LIMIT + index + 1).padStart(3, "0");
                   const copied = Boolean(item.tradeId && copiedTradeId === item.tradeId);
                   const rowId = String(item.orderId || item.tradeId || "").trim();
@@ -2822,11 +2813,11 @@ export default function RealtimeBuyOrderPage() {
                       <div className="flex min-w-0 items-center gap-1.5">
                         <span className="font-mono text-[10px] text-slate-400">{rowNo}</span>
                         <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(item.status)}`}>
-                          {getStatusLabel(item.status)}
+                          {getStatusLabel(item.status, copy)}
                         </span>
                         {isHighlighted && (
                           <span className="new-record-pill animate-pulse rounded border border-cyan-300 bg-cyan-100 px-1 py-0.5 font-mono text-[9px] font-semibold text-cyan-800">
-                            NEW
+                            {copy.common.new}
                           </span>
                         )}
                       </div>
@@ -2843,7 +2834,7 @@ export default function RealtimeBuyOrderPage() {
 
                       <div className="min-w-0 text-right">
                         <p className="truncate font-mono text-[12px] font-semibold leading-none tabular-nums text-slate-900">
-                          {formatKrw(item.amountKrw)} KRW
+                          {formatKrw(item.amountKrw, copy.numberLocale)} KRW
                         </p>
                         <p className="truncate font-mono text-[10px] leading-none text-cyan-700">
                           {formatUsdt(item.amountUsdt)} USDT
@@ -2859,7 +2850,7 @@ export default function RealtimeBuyOrderPage() {
                             onClick={() => {
                               void handleCopyTradeId(item.tradeId);
                             }}
-                            title="tradeId 복사"
+                            title={copy.common.copyTradeId}
                             className={`block max-w-full truncate font-mono text-[10px] underline underline-offset-2 transition ${
                               copied ? "text-emerald-700 decoration-emerald-500" : "text-cyan-700 decoration-cyan-500 hover:text-cyan-900"
                             }`}
@@ -2886,7 +2877,7 @@ export default function RealtimeBuyOrderPage() {
                             disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
                             className="mt-1 inline-flex rounded border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {manualConfirmLoadingOrderId === item.orderId ? "확인중..." : "수동입금"}
+                            {manualConfirmLoadingOrderId === item.orderId ? copy.buyorder.pending.manualChecking : copy.buyorder.pending.manualDepositButton}
                           </button>
                         )}
                       </div>
@@ -2899,7 +2890,7 @@ export default function RealtimeBuyOrderPage() {
 
           <div className="flex items-center justify-between border-t border-slate-200/80 bg-white px-3 py-2">
             <p className="text-[11px] text-slate-600">
-              page {buyOrderListPage} / {buyOrderListTotalPages}
+              {copy.common.page} {buyOrderListPage} / {buyOrderListTotalPages}
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -2910,7 +2901,7 @@ export default function RealtimeBuyOrderPage() {
                 disabled={buyOrderListPage <= 1 || isBuyOrderListLoading}
                 className="h-7 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                이전
+                {copy.common.previous}
               </button>
               <button
                 type="button"
@@ -2920,7 +2911,7 @@ export default function RealtimeBuyOrderPage() {
                 disabled={buyOrderListPage >= buyOrderListTotalPages || isBuyOrderListLoading}
                 className="h-7 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                다음
+                {copy.common.next}
               </button>
             </div>
           </div>
@@ -2928,7 +2919,7 @@ export default function RealtimeBuyOrderPage() {
 
         <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-4 py-3">
-            <p className="font-semibold text-slate-100">실시간 BuyOrder 시스템 로그</p>
+            <p className="font-semibold text-slate-100">{copy.buyorder.log.title}</p>
             <p className="mt-1 font-mono text-[11px] text-slate-500">tail -f /var/log/buyorder/realtime.log</p>
           </div>
 
@@ -2944,16 +2935,16 @@ export default function RealtimeBuyOrderPage() {
           <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
             {sortedEvents.length === 0 && (
               <div className="rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-8 text-center font-mono text-xs text-slate-500">
-                [WAITING] 아직 수신된 이벤트가 없습니다.
+                {copy.buyorder.log.empty}
               </div>
             )}
 
             {sortedEvents.map((item, index) => {
-              const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
-              const toLabel = getStatusLabel(item.data.statusTo);
+              const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom, copy) : copy.common.initial;
+              const toLabel = getStatusLabel(item.data.statusTo, copy);
               const isHighlighted = item.highlightUntil > Date.now();
               const isJackpotEvent = isPaymentConfirmedStatus(item.data.statusTo);
-              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs, copy.locale);
               const detailTradeId = getOptionalText(item.data.tradeId);
               const detailOrderId = getOptionalText(item.data.orderId);
               const detailSource = getOptionalText(item.data.source);
@@ -2993,7 +2984,7 @@ export default function RealtimeBuyOrderPage() {
                     </span>
                     {isHighlighted && (
                       <span className="animate-pulse rounded border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-cyan-100">
-                        NEW
+                        {copy.common.new}
                       </span>
                     )}
                   </div>
@@ -3014,7 +3005,7 @@ export default function RealtimeBuyOrderPage() {
                       usdt=<span className="text-cyan-100">{formatUsdt(item.data.amountUsdt)}</span>
                     </span>
                     <span className="text-slate-300">
-                      krw=<span className="text-slate-100">{formatKrw(item.data.amountKrw)}</span>
+                      krw=<span className="text-slate-100">{formatKrw(item.data.amountKrw, copy.numberLocale)}</span>
                     </span>
                     <span className="text-slate-400">
                       buyer={maskName(item.data.buyerName)}:{maskAccountNumber(item.data.buyerAccountNumber)}

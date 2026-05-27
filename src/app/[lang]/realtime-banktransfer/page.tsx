@@ -14,6 +14,7 @@ import {
   type BankTransferUnmatchedRealtimeEvent,
 } from "@lib/ably/constants";
 import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
+import { getRealtimeCopy, type RealtimeCopy } from "../realtime.assets";
 
 type RealtimeItem = {
   id: string;
@@ -87,12 +88,12 @@ function normalizeTransactionType(value: string): "deposited" | "withdrawn" | "o
   return "other";
 }
 
-function getTransactionTypeLabel(transactionType: string): string {
+function getTransactionTypeLabel(transactionType: string, copy: RealtimeCopy): string {
   if (transactionType === "deposited") {
-    return "입금";
+    return copy.banktransfer.transactionTypes.deposited;
   }
   if (transactionType === "withdrawn") {
-    return "출금";
+    return copy.banktransfer.transactionTypes.withdrawn;
   }
   return transactionType || "-";
 }
@@ -117,8 +118,8 @@ function getStatusClassName(status: string): string {
   return "border border-slate-500/40 bg-slate-700/45 text-slate-100";
 }
 
-function formatKrw(value: number): string {
-  return Number(value || 0).toLocaleString("ko-KR");
+function formatKrw(value: number, locale: string): string {
+  return Number(value || 0).toLocaleString(locale);
 }
 
 function maskName(value: string): string {
@@ -185,8 +186,8 @@ function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   }
 }
 
-function getKstDateLabel(referenceDate: Date): string {
-  return new Intl.DateTimeFormat("ko-KR", {
+function getKstDateLabel(referenceDate: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "Asia/Seoul",
     year: "numeric",
     month: "long",
@@ -288,6 +289,7 @@ function useCountUpValue(targetValue: number): number {
 export default function RealtimeBankTransferPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
+  const copy = useMemo(() => getRealtimeCopy(lang), [lang]);
 
   const [events, setEvents] = useState<RealtimeItem[]>([]);
   const [unmatchedEvents, setUnmatchedEvents] = useState<UnmatchedRealtimeItem[]>([]);
@@ -471,10 +473,10 @@ export default function RealtimeBankTransferPage() {
         }
       }
 
-      setSyncErrorMessage(lastError || "재동기화에 실패했습니다.");
+      setSyncErrorMessage(lastError || copy.banktransfer.errors.resyncFailed);
       setIsSyncing(false);
     },
-    [upsertRealtimeEvents, updateCursor],
+    [copy, upsertRealtimeEvents, updateCursor],
   );
 
   const fetchTodaySummary = useCallback(async () => {
@@ -510,10 +512,10 @@ export default function RealtimeBankTransferPage() {
       });
       setTodaySummaryErrorMessage(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "오늘 누적 집계 조회 실패";
+      const message = error instanceof Error ? error.message : copy.banktransfer.errors.todaySummaryFailed;
       setTodaySummaryErrorMessage(message);
     }
-  }, []);
+  }, [copy]);
 
   const applyRealtimeEventToTodaySummary = useCallback((event: BankTransferDashboardEvent) => {
     if (event.status !== "stored") {
@@ -866,7 +868,10 @@ export default function RealtimeBankTransferPage() {
   const todayEventTotal = Math.max(1, todayTotals.totalCount);
   const depositedRatio = Math.max(8, Math.min(100, (todayTotals.depositedCount / todayEventTotal) * 100));
   const withdrawnRatio = Math.max(8, Math.min(100, (todayTotals.withdrawnCount / todayEventTotal) * 100));
-  const todayDateLabelKst = useMemo(() => getKstDateLabel(new Date(countdownNowMs)), [countdownNowMs]);
+  const todayDateLabelKst = useMemo(
+    () => getKstDateLabel(new Date(countdownNowMs), copy.numberLocale),
+    [copy.numberLocale, countdownNowMs],
+  );
   const remainingMsToday = useMemo(() => getRemainingKstMs(countdownNowMs), [countdownNowMs]);
   const countdownLabel = useMemo(() => formatCountdownHms(remainingMsToday), [remainingMsToday]);
   const remainingDayRatio = Math.max(0, Math.min(100, (remainingMsToday / ONE_DAY_MS) * 100));
@@ -891,9 +896,9 @@ export default function RealtimeBankTransferPage() {
       <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(15,118,110,0.22),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-cyan-100">Banktransfer Realtime Dashboard</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-cyan-100">{copy.banktransfer.title}</h1>
             <p className="mt-1 text-sm text-slate-300">
-              공개 대시보드입니다. 입금자 이름/계좌번호는 마스킹되어 표시됩니다.
+              {copy.banktransfer.description}
             </p>
             <p className="mt-1 text-xs text-cyan-300/90">
               Channel: <span className="font-mono">{BANKTRANSFER_ABLY_CHANNEL}</span> / Event: <span className="font-mono">{BANKTRANSFER_ABLY_EVENT_NAME}</span>
@@ -910,24 +915,24 @@ export default function RealtimeBankTransferPage() {
                 className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSyncing}
               >
-                {isSyncing ? "재동기화 중..." : "재동기화"}
+                {isSyncing ? copy.banktransfer.resyncing : copy.banktransfer.resync}
               </button>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               <article className="relative overflow-hidden rounded-xl border border-violet-300/35 bg-gradient-to-br from-indigo-500/26 via-violet-500/16 to-slate-950/72 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(99,102,241,0.95)]">
                 <div className="pointer-events-none absolute -right-10 -top-8 h-24 w-24 rounded-full bg-violet-300/25 blur-2xl" />
-                <p className="relative text-[11px] uppercase tracking-[0.12em] text-violet-100/90">오늘 날짜 (KST)</p>
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-violet-100/90">{copy.banktransfer.todayDateKst}</p>
                 <p className="relative mt-1 text-lg font-semibold leading-tight text-violet-50">{todayDateLabelKst}</p>
                 <div className="relative mt-2 flex items-end justify-between">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.12em] text-violet-100/80">오늘 남은 시간</p>
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-violet-100/80">{copy.banktransfer.remainingToday}</p>
                     <p className="mt-1 font-mono text-2xl font-semibold leading-none tabular-nums text-violet-50 animate-pulse">
                       {countdownLabel}
                     </p>
                   </div>
                   <span className="inline-flex rounded-full border border-violet-300/45 bg-violet-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-violet-50">
-                    COUNTDOWN
+                    {copy.common.countdown}
                   </span>
                 </div>
                 <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-violet-100/30">
@@ -940,15 +945,17 @@ export default function RealtimeBankTransferPage() {
 
               <article className="relative overflow-hidden rounded-xl border border-emerald-400/35 bg-gradient-to-br from-emerald-500/24 via-emerald-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(16,185,129,0.95)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-300/20 blur-2xl" />
-                <p className="relative text-[11px] uppercase tracking-[0.12em] text-emerald-100/85">오늘 입금 (KST)</p>
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-emerald-100/85">{copy.banktransfer.todayDepositedKst}</p>
                 <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-emerald-50">
-                  {formatKrw(animatedDepositedAmount)}
+                  {formatKrw(animatedDepositedAmount, copy.numberLocale)}
                   <span className="ml-1 text-sm font-medium text-emerald-200/90">KRW</span>
                 </p>
                 <div className="relative mt-1 flex items-center justify-between text-xs">
-                  <span className="text-emerald-100/90">누적 {animatedDepositedCount.toLocaleString("ko-KR")}건</span>
+                  <span className="text-emerald-100/90">
+                    {copy.banktransfer.accumulated(animatedDepositedCount.toLocaleString(copy.numberLocale))}
+                  </span>
                   <span className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-50">
-                    LIVE
+                    {copy.common.live}
                   </span>
                 </div>
                 <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-emerald-100/30">
@@ -961,15 +968,17 @@ export default function RealtimeBankTransferPage() {
 
               <article className="relative overflow-hidden rounded-xl border border-rose-400/35 bg-gradient-to-br from-rose-500/24 via-rose-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(244,63,94,0.95)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-300/20 blur-2xl" />
-                <p className="relative text-[11px] uppercase tracking-[0.12em] text-rose-100/85">오늘 출금 (KST)</p>
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-rose-100/85">{copy.banktransfer.todayWithdrawnKst}</p>
                 <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-rose-50">
-                  {formatKrw(animatedWithdrawnAmount)}
+                  {formatKrw(animatedWithdrawnAmount, copy.numberLocale)}
                   <span className="ml-1 text-sm font-medium text-rose-200/90">KRW</span>
                 </p>
                 <div className="relative mt-1 flex items-center justify-between text-xs">
-                  <span className="text-rose-100/90">누적 {animatedWithdrawnCount.toLocaleString("ko-KR")}건</span>
+                  <span className="text-rose-100/90">
+                    {copy.banktransfer.accumulated(animatedWithdrawnCount.toLocaleString(copy.numberLocale))}
+                  </span>
                   <span className="inline-flex rounded-full border border-rose-300/40 bg-rose-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-rose-50">
-                    LIVE
+                    {copy.common.live}
                   </span>
                 </div>
                 <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-rose-100/30">
@@ -985,16 +994,16 @@ export default function RealtimeBankTransferPage() {
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Connection <span className="ml-2 font-semibold text-cyan-200">{connectionState}</span>
+            {copy.common.connection} <span className="ml-2 font-semibold text-cyan-200">{connectionState}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Sync <span className="ml-2 font-semibold text-cyan-200">{isSyncing ? "running" : "idle"}</span>
+            {copy.common.sync} <span className="ml-2 font-semibold text-cyan-200">{isSyncing ? copy.common.running : copy.common.idle}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Cursor <span className="ml-2 break-all font-mono text-xs text-cyan-200">{cursor || "-"}</span>
+            {copy.common.cursor} <span className="ml-2 break-all font-mono text-xs text-cyan-200">{cursor || "-"}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            매칭된 이벤트 <span className="ml-2 font-semibold text-cyan-200">{summary.matchedCount.toLocaleString("ko-KR")}</span>
+            {copy.banktransfer.matchedEvents} <span className="ml-2 font-semibold text-cyan-200">{summary.matchedCount.toLocaleString(copy.numberLocale)}</span>
           </div>
         </div>
       </section>
@@ -1013,36 +1022,36 @@ export default function RealtimeBankTransferPage() {
 
       {todaySummaryErrorMessage && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
-          오늘 누적 집계 조회 실패: {todaySummaryErrorMessage}
+          {copy.banktransfer.todaySummaryErrorPrefix} {todaySummaryErrorMessage}
         </div>
       )}
 
       <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-slate-400">거래 지표 (오늘 · KST)</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">{copy.banktransfer.metricTitle}</p>
           <div className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between rounded-lg border border-slate-700/70 bg-slate-950/60 px-3 py-2">
-              <span className="text-slate-300">입금 건수</span>
-              <span className="font-semibold tabular-nums text-emerald-200">{todayTotals.depositedCount.toLocaleString("ko-KR")}</span>
+              <span className="text-slate-300">{copy.banktransfer.depositedCount}</span>
+              <span className="font-semibold tabular-nums text-emerald-200">{todayTotals.depositedCount.toLocaleString(copy.numberLocale)}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-700/70 bg-slate-950/60 px-3 py-2">
-              <span className="text-slate-300">출금 건수</span>
-              <span className="font-semibold tabular-nums text-rose-200">{todayTotals.withdrawnCount.toLocaleString("ko-KR")}</span>
+              <span className="text-slate-300">{copy.banktransfer.withdrawnCount}</span>
+              <span className="font-semibold tabular-nums text-rose-200">{todayTotals.withdrawnCount.toLocaleString(copy.numberLocale)}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-700/70 bg-slate-950/60 px-3 py-2">
-              <span className="text-slate-300">매칭 성공</span>
-              <span className="font-semibold tabular-nums text-cyan-200">{summary.matchedCount.toLocaleString("ko-KR")}</span>
+              <span className="text-slate-300">{copy.banktransfer.matchedSuccess}</span>
+              <span className="font-semibold tabular-nums text-cyan-200">{summary.matchedCount.toLocaleString(copy.numberLocale)}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-700/70 bg-slate-950/60 px-3 py-2">
-              <span className="text-slate-300">오류 이벤트</span>
-              <span className="font-semibold tabular-nums text-amber-200">{summary.errorCount.toLocaleString("ko-KR")}</span>
+              <span className="text-slate-300">{copy.banktransfer.errorEvents}</span>
+              <span className="font-semibold tabular-nums text-amber-200">{summary.errorCount.toLocaleString(copy.numberLocale)}</span>
             </div>
           </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-4 py-3">
-            <p className="font-semibold text-slate-100">실시간 입출금 시스템 로그</p>
+            <p className="font-semibold text-slate-100">{copy.banktransfer.logTitle}</p>
             <p className="mt-1 font-mono text-[11px] text-slate-500">tail -f /var/log/banktransfer/realtime.log</p>
           </div>
 
@@ -1058,26 +1067,26 @@ export default function RealtimeBankTransferPage() {
           <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
             <div className="mb-3 rounded-xl border border-amber-500/35 bg-amber-950/30 p-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-amber-100">오늘 미신청입금 목록 (KST)</p>
+                <p className="text-sm font-semibold text-amber-100">{copy.banktransfer.unmatchedTitle}</p>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="rounded border border-amber-400/40 bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-100">
-                    건수 {todayUnmatchedEvents.length.toLocaleString("ko-KR")}
+                    {copy.banktransfer.unmatchedCount(todayUnmatchedEvents.length.toLocaleString(copy.numberLocale))}
                   </span>
                   <span className="rounded border border-amber-400/40 bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-100">
-                    합계 {formatKrw(todayUnmatchedTotalAmount)} KRW
+                    {copy.banktransfer.unmatchedTotal(formatKrw(todayUnmatchedTotalAmount, copy.numberLocale))}
                   </span>
                 </div>
               </div>
 
               {todayUnmatchedEvents.length === 0 ? (
                 <div className="rounded-lg border border-amber-900/80 bg-slate-950/45 px-3 py-3 text-sm text-amber-200/70">
-                  오늘 미신청입금 이벤트가 없습니다.
+                  {copy.banktransfer.unmatchedEmpty}
                 </div>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {todayUnmatchedEvents.slice(0, 12).map((item, index) => {
                     const isHighlighted = item.highlightUntil > Date.now();
-                    const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                    const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs, copy.locale);
                     const receiverInfo = getReceiverDisplayInfo({
                       ...item.data,
                       balance: null,
@@ -1106,19 +1115,19 @@ export default function RealtimeBankTransferPage() {
                           <span className="font-mono text-[11px] text-amber-200/80">{timeInfo.relativeLabel}</span>
                         </div>
                         <div className="mt-1 text-lg font-semibold tabular-nums text-amber-50">
-                          {formatKrw(item.data.amount)} KRW
+                          {formatKrw(item.data.amount, copy.numberLocale)} KRW
                         </div>
                         <div className="mt-1 text-xs text-amber-100">
-                          입금자: {maskName(item.data.transactionName)} / {maskAccountNumber(item.data.bankAccountNumber)}
+                          {copy.banktransfer.sender}: {maskName(item.data.transactionName)} / {maskAccountNumber(item.data.bankAccountNumber)}
                         </div>
                         <div className="mt-1 text-[11px] text-amber-200/85">
-                          수취: {receiverBankName} {receiverAccountHolder} {receiverAccountNumber}
+                          {copy.banktransfer.receiver}: {receiverBankName} {receiverAccountHolder} {receiverAccountNumber}
                         </div>
                         <div className="mt-1 flex items-center justify-between">
                           <span className="font-mono text-[11px] text-amber-300/80">reason={item.data.reason || "-"}</span>
                           {isHighlighted && (
                             <span className="animate-pulse rounded border border-amber-300/60 bg-amber-500/25 px-1.5 py-0.5 text-[10px] font-semibold text-amber-100">
-                              NEW
+                              {copy.common.new}
                             </span>
                           )}
                         </div>
@@ -1131,13 +1140,13 @@ export default function RealtimeBankTransferPage() {
 
             {sortedEvents.length === 0 && (
               <div className="rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-8 text-center font-mono text-xs text-slate-500">
-                [WAITING] 아직 수신된 이벤트가 없습니다.
+                {copy.banktransfer.waitingEmpty}
               </div>
             )}
 
             {sortedEvents.map((item, index) => {
               const isHighlighted = item.highlightUntil > Date.now();
-              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs, copy.locale);
               const receiverInfo = getReceiverDisplayInfo(item.data);
               const receiverAccountHolder = receiverInfo.accountHolder
                 ? maskName(receiverInfo.accountHolder)
@@ -1148,7 +1157,8 @@ export default function RealtimeBankTransferPage() {
               const receiverBankName = receiverInfo.bankName || "-";
               const status = String(item.data.status || "").toLowerCase();
               const level = status === "error" ? "ERROR" : status === "stored" ? "INFO" : "WARN";
-              const type = getTransactionTypeLabel(item.data.transactionType).toUpperCase();
+              const normalizedType = normalizeTransactionType(item.data.transactionType);
+              const type = getTransactionTypeLabel(normalizedType, copy).toUpperCase();
               const lineNo = String(sortedEvents.length - index).padStart(4, "0");
 
               return (
@@ -1173,15 +1183,15 @@ export default function RealtimeBankTransferPage() {
                       {level}
                     </span>
                     <span className={`rounded px-1.5 py-0.5 font-semibold ${
-                      type === "입금"
+                      normalizedType === "deposited"
                         ? "bg-cyan-500/20 text-cyan-200"
-                        : type === "출금"
+                        : normalizedType === "withdrawn"
                           ? "bg-fuchsia-500/20 text-fuchsia-200"
                           : "bg-slate-700/80 text-slate-200"
                     }`}>
                       {type}
                     </span>
-                    <span className="text-slate-300">amount=<span className="text-slate-100">{formatKrw(item.data.amount)}KRW</span></span>
+                    <span className="text-slate-300">amount=<span className="text-slate-100">{formatKrw(item.data.amount, copy.numberLocale)}KRW</span></span>
                     <span className="text-slate-400">sender={maskName(item.data.transactionName)}:{maskAccountNumber(item.data.bankAccountNumber)}</span>
                     <span className="text-slate-400">receiver={receiverBankName}/{receiverAccountHolder}/{receiverAccountNumber}</span>
                     <span className="text-cyan-300">tid={item.data.tradeId || "-"}</span>
@@ -1192,7 +1202,7 @@ export default function RealtimeBankTransferPage() {
                     <span className="text-slate-600">({timeInfo.relativeLabel})</span>
                     {isHighlighted && (
                       <span className="animate-pulse rounded border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-cyan-100">
-                        NEW
+                        {copy.common.new}
                       </span>
                     )}
                   </div>

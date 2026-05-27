@@ -2,37 +2,35 @@
 
 import Link from "next/link";
 
-type RealtimeTopNavTab = "home" | "banktransfer" | "settlement" | "buyorder";
+import { getRealtimeCopy, type RealtimeTopNavTab } from "@/app/[lang]/realtime.assets";
 
 type RealtimeTopNavProps = {
   lang: string;
   current: RealtimeTopNavTab;
 };
 
-const MENU_ITEMS: Array<{ key: RealtimeTopNavTab; label: string; getHref: (lang: string) => string }> = [
+const MENU_ITEMS: Array<{ key: RealtimeTopNavTab; getHref: (lang: string) => string }> = [
   {
     key: "home",
-    label: "Home",
     getHref: (lang: string) => `/${lang}/promotion`,
   },
   {
     key: "banktransfer",
-    label: "Banktransfer",
     getHref: (lang: string) => `/${lang}/realtime-banktransfer`,
   },
   {
     key: "buyorder",
-    label: "BuyOrder",
     getHref: (lang: string) => `/${lang}/realtime-buyorder`,
   },
   {
     key: "settlement",
-    label: "Settlement",
     getHref: (lang: string) => `/${lang}/realtime-settlement`,
   },
 ];
 
 export default function RealtimeTopNav({ lang, current }: RealtimeTopNavProps) {
+  const copy = getRealtimeCopy(lang);
+
   return (
     <div className="fixed inset-x-0 top-0 z-[170] px-2 sm:px-4">
       <div className="mx-auto flex w-full max-w-[1880px] justify-center">
@@ -51,7 +49,7 @@ export default function RealtimeTopNav({ lang, current }: RealtimeTopNavProps) {
                     : "border-slate-600/75 bg-slate-800/70 text-slate-300 hover:border-cyan-300/55 hover:text-cyan-100"
                 }`}
               >
-                {item.label}
+                {copy.topNav[item.key]}
               </Link>
             );
           })}
