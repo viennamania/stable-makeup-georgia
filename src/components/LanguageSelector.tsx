@@ -15,6 +15,7 @@ import { langs } from "@/utils/langs";
 
 type LanguageSelectorProps = {
   className?: string;
+  disableGoogleTranslate?: boolean;
   variant?: "floating" | "inline";
 };
 
@@ -52,8 +53,17 @@ const setGoogleTranslateLocale = (locale: SupportedLocale) => {
   document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
 };
 
+const clearGoogleTranslateLocale = () => {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+};
+
 const LanguageSelector = ({
   className = "",
+  disableGoogleTranslate = false,
   variant = "floating",
 }: LanguageSelectorProps) => {
   const router = useRouter();
@@ -71,6 +81,12 @@ const LanguageSelector = ({
     setSelectedLocale(nextLocale);
   }, [pathLocale, pathname]);
 
+  React.useEffect(() => {
+    if (disableGoogleTranslate) {
+      clearGoogleTranslateLocale();
+    }
+  }, [disableGoogleTranslate, pathname]);
+
   const handleLangChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const nextLocale = event.target.value;
     if (!isSupportedLocale(nextLocale)) {
@@ -78,7 +94,11 @@ const LanguageSelector = ({
     }
 
     setCookieLocale(nextLocale);
-    setGoogleTranslateLocale(nextLocale);
+    if (disableGoogleTranslate) {
+      clearGoogleTranslateLocale();
+    } else {
+      setGoogleTranslateLocale(nextLocale);
+    }
     setSelectedLocale(nextLocale);
 
     const nextPathname = buildLocalizedPathname(pathname, nextLocale);
