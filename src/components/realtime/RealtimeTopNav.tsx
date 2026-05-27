@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { getRealtimeCopy, type RealtimeTopNavTab } from "@/app/[lang]/realtime.assets";
+import LanguageSelector from "@/components/LanguageSelector";
 
 type RealtimeTopNavProps = {
   lang: string;
@@ -34,7 +35,7 @@ export default function RealtimeTopNav({ lang, current }: RealtimeTopNavProps) {
   return (
     <div className="fixed inset-x-0 top-0 z-[170] px-2 sm:px-4">
       <div className="mx-auto flex w-full max-w-[1880px] justify-center">
-        <nav className="mt-2 flex w-full max-w-[760px] items-center gap-1.5 overflow-x-auto whitespace-nowrap rounded-2xl border border-slate-700/80 bg-slate-950/85 p-1.5 shadow-[0_16px_30px_-20px_rgba(2,6,23,0.95)] backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav className="mt-2 flex w-full max-w-[920px] items-center gap-1.5 overflow-x-auto whitespace-nowrap rounded-2xl border border-slate-700/80 bg-slate-950/85 p-1.5 shadow-[0_16px_30px_-20px_rgba(2,6,23,0.95)] backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {MENU_ITEMS.map((item) => {
             const isActive = item.key === current;
 
@@ -53,6 +54,11 @@ export default function RealtimeTopNav({ lang, current }: RealtimeTopNavProps) {
               </Link>
             );
           })}
+          <LanguageSelector
+            disableGoogleTranslate
+            variant="inline"
+            className="ml-auto shrink-0 rounded-xl border border-cyan-300/45 bg-slate-950/90 px-2.5 py-1.5 shadow-[0_0_0_1px_rgba(34,211,238,0.12),0_10px_24px_-18px_rgba(34,211,238,0.95)] [&>select]:border-slate-600/80 [&>select]:bg-slate-950/95 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-cyan-100"
+          />
         </nav>
       </div>
     </div>
