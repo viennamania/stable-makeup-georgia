@@ -1493,7 +1493,7 @@ export default function PromotionPage() {
         <div className="promo-orb promo-orb-c" />
       </div>
 
-      <section className="promo-shell relative mx-auto w-full max-w-[1320px] space-y-3 px-2.5 pb-3 pt-[5.25rem] sm:space-y-4 sm:px-5 sm:pb-5 sm:pt-5 lg:px-8">
+      <section className="promo-shell relative mx-auto w-full max-w-[1320px] space-y-3 px-2.5 pb-3 pt-[9.75rem] sm:space-y-4 sm:px-5 sm:pb-5 sm:pt-5 lg:px-8">
         <header
           className={`relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950/86 p-3.5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.9)] backdrop-blur sm:rounded-[24px] sm:p-5 ${isHeroBursting ? "promo-hero-burst" : ""}`}
         >
