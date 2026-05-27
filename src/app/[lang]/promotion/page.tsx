@@ -1142,13 +1142,11 @@ export default function PromotionPage() {
       <LanguageSelector
         disableGoogleTranslate
         variant="inline"
-        className="fixed right-2 top-2 z-[2600] min-h-[42px] justify-center rounded-lg border border-cyan-300/70 bg-slate-950/95 px-3 py-2 text-xs shadow-[0_16px_36px_-16px_rgba(34,211,238,0.92)] ring-1 ring-cyan-300/30 backdrop-blur-xl sm:right-4 sm:top-4 [&>select]:border-slate-600/80 [&>select]:bg-slate-950/95 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-cyan-100"
+        className="fixed left-2 right-2 top-2 z-[2600] min-h-[42px] w-auto justify-center rounded-lg border border-cyan-300/70 bg-slate-950/95 px-3 py-2 text-xs shadow-[0_16px_36px_-16px_rgba(34,211,238,0.92)] ring-1 ring-cyan-300/30 backdrop-blur-xl sm:left-auto sm:right-4 sm:top-4 [&>select]:border-slate-600/80 [&>select]:bg-slate-950/95 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-cyan-100 max-sm:[&>select]:min-w-0 max-sm:[&>select]:flex-1"
       />
 
       <aside
-        className={`fixed left-2 top-2 z-[140] w-[min(calc(100vw-1rem),366px)] transition-all sm:left-auto sm:right-4 sm:top-24 ${
-          walletPanelOpen ? "" : "max-sm:w-[212px]"
-        }`}
+        className="fixed left-2 top-[76px] z-[140] w-[calc(100vw-1rem)] transition-all sm:left-auto sm:right-4 sm:top-24 sm:w-[min(calc(100vw-1rem),366px)]"
       >
         <section className="overflow-hidden rounded-2xl border border-cyan-300/35 bg-slate-950/88 shadow-[0_18px_42px_-24px_rgba(34,211,238,0.72)] backdrop-blur-xl">
           <header className="flex items-center justify-between border-b border-slate-700/70 px-3 py-2.5">
