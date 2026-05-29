@@ -113,6 +113,9 @@ export interface OrderProps {
 
   createdByApi?: string | null,
   createdByRequest?: any,
+  publicIp?: string | null,
+  clientPublicIp?: string | null,
+  requestMeta?: any,
   autoConfirmPayment?: boolean | null,
   matchedByAdmin?: boolean | null,
   paymentConfirmedBy?: any,
@@ -2458,6 +2461,11 @@ export async function insertBuyOrder(data: any) {
 
 
   const collection = client.db(dbName).collection('buyorders');
+  const hasPublicIpField = Object.prototype.hasOwnProperty.call(data, 'publicIp');
+  const hasClientPublicIpField = Object.prototype.hasOwnProperty.call(data, 'clientPublicIp');
+  const hasRequestMetaField = Object.prototype.hasOwnProperty.call(data, 'requestMeta');
+  const orderPublicIp = data.publicIp ?? data.clientPublicIp ?? null;
+  const orderClientPublicIp = data.clientPublicIp ?? orderPublicIp;
 
   const result = await collection.insertOne(
 
@@ -2506,6 +2514,17 @@ export async function insertBuyOrder(data: any) {
       orderNumber: data.orderNumber || '', // optional, can be empty
       createdByApi: data.createdByApi || null,
       createdByRequest: data.createdByRequest || null,
+      ...(hasPublicIpField || hasClientPublicIpField
+        ? {
+          publicIp: orderPublicIp,
+          clientPublicIp: orderClientPublicIp,
+        }
+        : {}),
+      ...(hasRequestMetaField
+        ? {
+          requestMeta: data.requestMeta ?? null,
+        }
+        : {}),
     }
   );
 
