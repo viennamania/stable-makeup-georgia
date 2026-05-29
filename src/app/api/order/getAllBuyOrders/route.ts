@@ -207,6 +207,9 @@ const sanitizeOrderForPublic = (order: unknown) => {
 
   return {
     ...input,
+    publicIp: null,
+    clientPublicIp: null,
+    requestMeta: null,
     nickname: maskName(input.nickname),
     walletAddress: maskWalletLikeValue(input.walletAddress),
     paymentConfirmedBy: sanitizeActionActorForPublic(input.paymentConfirmedBy),
