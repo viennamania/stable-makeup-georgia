@@ -18,6 +18,137 @@ import {
 
 const ROUTE = "/api/order/setBuyOrder";
 
+function normalizeText(value: unknown): string {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" || typeof value === "bigint") {
+    return String(value).trim();
+  }
+
+  return "";
+}
+
+const IP_HEADER_FALLBACK_ORDER = [
+  "cf-connecting-ip",
+  "true-client-ip",
+  "x-real-ip",
+  "x-client-ip",
+] as const;
+
+function getRequestHeaderValue(request: NextRequest, headerName: string): string {
+  return normalizeText(request.headers.get(headerName));
+}
+
+function getFirstForwardedIp(request: NextRequest): string {
+  const forwardedFor = getRequestHeaderValue(request, "x-forwarded-for");
+  return forwardedFor.split(",")[0]?.trim() || "";
+}
+
+function buildIpHeaderSnapshot(request: NextRequest): Record<string, string | null> {
+  return {
+    "x-forwarded-for": getRequestHeaderValue(request, "x-forwarded-for") || null,
+    "cf-connecting-ip": getRequestHeaderValue(request, "cf-connecting-ip") || null,
+    "true-client-ip": getRequestHeaderValue(request, "true-client-ip") || null,
+    "x-real-ip": getRequestHeaderValue(request, "x-real-ip") || null,
+    "x-client-ip": getRequestHeaderValue(request, "x-client-ip") || null,
+  };
+}
+
+function resolveBuyOrderPublicIp(
+  payload: Record<string, any>,
+  request: NextRequest,
+): {
+  publicIp: string;
+  source: string;
+  headers: Record<string, string | null>;
+} {
+  const bodyClientPublicIp = normalizeText(payload?.clientPublicIp);
+  if (bodyClientPublicIp) {
+    return {
+      publicIp: bodyClientPublicIp,
+      source: "body.clientPublicIp",
+      headers: buildIpHeaderSnapshot(request),
+    };
+  }
+
+  const bodyPublicIp = normalizeText(payload?.publicIp);
+  if (bodyPublicIp) {
+    return {
+      publicIp: bodyPublicIp,
+      source: "body.publicIp",
+      headers: buildIpHeaderSnapshot(request),
+    };
+  }
+
+  const forwardedIp = getFirstForwardedIp(request);
+  if (forwardedIp) {
+    return {
+      publicIp: forwardedIp,
+      source: "headers.x-forwarded-for",
+      headers: buildIpHeaderSnapshot(request),
+    };
+  }
+
+  for (const headerName of IP_HEADER_FALLBACK_ORDER) {
+    const headerIp = getRequestHeaderValue(request, headerName);
+    if (headerIp) {
+      return {
+        publicIp: headerIp,
+        source: `headers.${headerName}`,
+        headers: buildIpHeaderSnapshot(request),
+      };
+    }
+  }
+
+  return {
+    publicIp: "",
+    source: "unavailable",
+    headers: buildIpHeaderSnapshot(request),
+  };
+}
+
+function hasProvidedRequestMeta(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+
+  return true;
+}
+
+function resolveBuyOrderRequestMeta({
+  payload,
+  request,
+  resolvedPublicIp,
+  publicCountry,
+}: {
+  payload: Record<string, any>;
+  request: NextRequest;
+  resolvedPublicIp: ReturnType<typeof resolveBuyOrderPublicIp>;
+  publicCountry: string;
+}) {
+  if (hasProvidedRequestMeta(payload?.requestMeta)) {
+    return payload.requestMeta;
+  }
+
+  return {
+    source: "headers",
+    route: ROUTE,
+    method: request.method,
+    ipSource: resolvedPublicIp.source,
+    publicIp: resolvedPublicIp.publicIp || null,
+    clientPublicIp: resolvedPublicIp.publicIp || null,
+    publicCountry: publicCountry || null,
+    headers: resolvedPublicIp.headers,
+    userAgent: getRequestHeaderValue(request, "user-agent") || null,
+  };
+}
+
 async function writePublicOrderApiCallLog({
   request,
   payload,
@@ -69,6 +200,14 @@ export async function POST(request: NextRequest) {
 
   const ip = getRequestIp(request);
   const country = getRequestCountry(request);
+  const resolvedPublicIp = resolveBuyOrderPublicIp(body, request);
+  const orderPublicIp = resolvedPublicIp.publicIp || null;
+  const orderRequestMeta = resolveBuyOrderRequestMeta({
+    payload: body,
+    request,
+    resolvedPublicIp,
+    publicCountry: country,
+  });
 
   const {
     storecode,
@@ -199,11 +338,14 @@ export async function POST(request: NextRequest) {
 
     returnUrl: returnUrl,
     orderNumber: orderNumber,
+    publicIp: orderPublicIp,
+    clientPublicIp: orderPublicIp,
+    requestMeta: orderRequestMeta,
     createdByApi: ROUTE,
     createdByRequest: {
       route: ROUTE,
       method: request.method,
-      publicIp: ip,
+      publicIp: orderPublicIp || ip,
       publicCountry: country,
       requestedAt: new Date().toISOString(),
     },
