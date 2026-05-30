@@ -361,6 +361,17 @@ const THIRDWEB_BUYORDER_WEBHOOK_SYNC_TRIGGER_STATUSES = new Set([
   "paymentSettled",
   "cancelled",
 ]);
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+function formatReturnUrlPayDate(date = new Date()): string {
+  const kstDate = new Date(date.getTime() + KST_OFFSET_MS);
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return [
+    `${kstDate.getUTCFullYear()}-${pad(kstDate.getUTCMonth() + 1)}-${pad(kstDate.getUTCDate())}`,
+    `${pad(kstDate.getUTCHours())}:${pad(kstDate.getUTCMinutes())}:${pad(kstDate.getUTCSeconds())}`,
+  ].join(" ");
+}
 
 const scheduleThirdwebBuyerWebhookSync = () => {
   void syncThirdwebSellerUsdtWebhooksIfStale().catch((error) => {
@@ -6020,7 +6031,7 @@ export async function buyOrderConfirmPayment(data: any) {
       } else {
 
         if (order.returnUrl) {
-          ///shop/influ_coin/orderform.php?oid=123456&paystate=4&pay_date=2025-10-2414:30:25&mul_no=1
+          ///shop/influ_coin/orderform.php?oid=123456&paystate=4&pay_date=2025-10-24 14:30:25&mul_no=1
           let finalUrl = order.returnUrl;
           let mergedParams: Record<string, string> = {};
           const startedAt = Date.now();
@@ -6034,7 +6045,7 @@ export async function buyOrderConfirmPayment(data: any) {
             mergedParams = {
               ...existingParams,
               paystate: '4',
-              pay_date: new Date().toISOString().replace('T', '').substring(0, 19),
+              pay_date: formatReturnUrlPayDate(),
               mul_no: '1',
               orderNumber: order.orderNumber || '',
             };
