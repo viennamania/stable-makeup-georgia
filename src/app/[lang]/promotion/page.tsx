@@ -21,6 +21,7 @@ import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAg
 import { client } from "@/app/client";
 import { chain as configuredChain } from "@/app/config/contractAddresses";
 import LanguageSelector from "@/components/LanguageSelector";
+import { getPromotionCopy, type PromotionCopy } from "./promotion.assets";
 
 type BankFeedItem = {
   id: string;
@@ -128,8 +129,8 @@ function updateCursorValue(
   }
 }
 
-function formatKrw(value: number): string {
-  return Number(value || 0).toLocaleString("ko-KR");
+function formatKrw(value: number, locale = "ko-KR"): string {
+  return Number(value || 0).toLocaleString(locale);
 }
 
 function formatUsdt(value: number): string {
@@ -169,12 +170,15 @@ function normalizeTransferUsdt(value: string | number | null | undefined): numbe
   return parsed;
 }
 
-function formatWalletTransferTime(value: string | number | null | undefined): string {
+function formatWalletTransferTime(
+  value: string | number | null | undefined,
+  locale = "ko-KR",
+): string {
   const timestamp = toTimestamp(value);
   if (!timestamp) {
     return "-";
   }
-  return new Date(timestamp).toLocaleString("ko-KR", {
+  return new Date(timestamp).toLocaleString(locale, {
     timeZone: "Asia/Seoul",
     month: "2-digit",
     day: "2-digit",
@@ -234,12 +238,19 @@ function shortenText(
   return `${normalized.slice(0, headLength)}...${normalized.slice(-tailLength)}`;
 }
 
-function getTransactionTypeLabel(transactionType: string | null | undefined): string {
+function formatCount(value: number, copy: PromotionCopy): string {
+  return `${Number(value || 0).toLocaleString(copy.numberLocale)}${copy.units.count}`;
+}
+
+function getTransactionTypeLabel(
+  transactionType: string | null | undefined,
+  copy: PromotionCopy,
+): string {
   if (transactionType === "deposited") {
-    return "입금";
+    return copy.transactionTypes.deposited;
   }
   if (transactionType === "withdrawn") {
-    return "출금";
+    return copy.transactionTypes.withdrawn;
   }
   return transactionType || "-";
 }
@@ -254,20 +265,20 @@ function getTransactionTypeClassName(transactionType: string | null | undefined)
   return "border border-slate-400/60 bg-slate-500/20 text-slate-100";
 }
 
-function getBuyStatusLabel(status: string | null | undefined): string {
+function getBuyStatusLabel(status: string | null | undefined, copy: PromotionCopy): string {
   switch (status) {
     case "ordered":
-      return "주문접수";
+      return copy.buyStatuses.ordered;
     case "accepted":
-      return "매칭완료";
+      return copy.buyStatuses.accepted;
     case "paymentRequested":
-      return "결제요청";
+      return copy.buyStatuses.paymentRequested;
     case "paymentConfirmed":
-      return "결제완료";
+      return copy.buyStatuses.paymentConfirmed;
     case "paymentSettled":
-      return "정산완료";
+      return copy.buyStatuses.paymentSettled;
     case "cancelled":
-      return "취소";
+      return copy.buyStatuses.cancelled;
     default:
       return status || "-";
   }
@@ -317,6 +328,7 @@ function getRelativeTimeBadgeClassName(tone: RelativeTimeTone): string {
 export default function PromotionPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
+  const copy = getPromotionCopy(lang);
   const { Canvas: WalletAddressQrCanvas } = useQRCode();
   const activeAccount = useActiveAccount();
   const activeWallet = useActiveWallet();
@@ -428,11 +440,11 @@ export default function PromotionPage() {
       setWalletTransfers(Array.isArray(data.result?.transfers) ? data.result?.transfers : []);
       setWalletTransferError(null);
     } catch (error) {
-      setWalletTransferError(error instanceof Error ? error.message : "전송내역 조회에 실패했습니다.");
+      setWalletTransferError(error instanceof Error ? error.message : copy.errors.walletTransferFetchFailed);
     } finally {
       setWalletTransfersLoading(false);
     }
-  }, [walletAddress]);
+  }, [copy.errors.walletTransferFetchFailed, walletAddress]);
 
   const fetchMemberProfile = useCallback(async () => {
     if (!walletAddress) {
@@ -767,12 +779,12 @@ export default function PromotionPage() {
         ]);
         setSyncErrorMessage(null);
       } catch (error) {
-        setSyncErrorMessage(error instanceof Error ? error.message : "재동기화에 실패했습니다.");
+        setSyncErrorMessage(error instanceof Error ? error.message : copy.errors.resyncFailed);
       } finally {
         setIsSyncing(false);
       }
     },
-    [syncBankEvents, syncBuyEvents],
+    [copy.errors.resyncFailed, syncBankEvents, syncBuyEvents],
   );
 
   useEffect(() => {
@@ -997,7 +1009,7 @@ export default function PromotionPage() {
   const latestSettlement = settlementBuyEvents[0];
   const latestBuyWalletExplorerUrl = getExplorerAddressUrl(latestBuy?.data.buyerWalletAddress);
   const latestSettlementTimeInfo = latestSettlement
-    ? getRelativeTimeInfo(latestSettlement.data.publishedAt || latestSettlement.receivedAt, nowMs)
+    ? getRelativeTimeInfo(latestSettlement.data.publishedAt || latestSettlement.receivedAt, nowMs, copy.locale)
     : null;
   const isSettlementCtaHot = Boolean(
     latestSettlement && latestSettlement.highlightUntil > nowMs,
@@ -1078,40 +1090,46 @@ export default function PromotionPage() {
     return Math.max(bankTime, buyTime, settlementTime);
   }, [latestBank, latestBuy, latestSettlement]);
 
-  const latestTimeInfo = getRelativeTimeInfo(latestTimestamp || null, nowMs);
+  const latestTimeInfo = getRelativeTimeInfo(latestTimestamp || null, nowMs, copy.locale);
 
   const tickerTexts = useMemo(() => {
     const merged = [
       ...sortedBankEvents.slice(0, 8).map((item) => ({
         id: `bank-${item.id}`,
         timestamp: getEventTimestamp(item.data.publishedAt, item.receivedAt),
-        text: `[Bank] ${getTransactionTypeLabel(item.data.transactionType)} ${formatKrw(item.data.amount)} KRW ${
-          item.data.store?.name || item.data.storecode || "Unknown Store"
+        text: `[${copy.ticker.bankPrefix}] ${getTransactionTypeLabel(
+          item.data.transactionType,
+          copy,
+        )} ${formatKrw(item.data.amount, copy.numberLocale)} KRW ${
+          item.data.store?.name || item.data.storecode || copy.common.unknownStore
         }`,
       })),
       ...sortedBuyEvents.slice(0, 8).map((item) => ({
         id: `buy-${item.id}`,
         timestamp: getEventTimestamp(item.data.publishedAt, item.receivedAt),
-        text: `[BuyOrder] ${getBuyStatusLabel(item.data.statusTo)} ${formatUsdt(item.data.amountUsdt)} USDT ${
-          item.data.store?.name || "Unknown Store"
+        text: `[${copy.ticker.buyOrderPrefix}] ${getBuyStatusLabel(
+          item.data.statusTo,
+          copy,
+        )} ${formatUsdt(item.data.amountUsdt)} USDT ${
+          item.data.store?.name || copy.common.unknownStore
         }`,
       })),
       ...settlementBuyEvents.slice(0, 6).map((item) => ({
         id: `settlement-${item.id}`,
         timestamp: getEventTimestamp(item.data.publishedAt, item.receivedAt),
-        text: `[Settlement] ${formatUsdt(item.data.amountUsdt)} USDT / ${
-          item.data.store?.name || "Unknown Store"
+        text: `[${copy.ticker.settlementPrefix}] ${formatUsdt(item.data.amountUsdt)} USDT / ${
+          item.data.store?.name || copy.common.unknownStore
         }`,
       })),
     ].sort((left, right) => right.timestamp - left.timestamp);
 
     if (merged.length === 0) {
-      return ["실시간 이벤트 대기 중입니다. 잠시 후 자동으로 갱신됩니다."];
+      return [copy.ticker.waiting];
     }
 
     const labels = merged.map((item) => item.text);
     return [...labels, ...labels];
-  }, [sortedBankEvents, sortedBuyEvents, settlementBuyEvents]);
+  }, [copy, sortedBankEvents, sortedBuyEvents, settlementBuyEvents]);
 
   const walletHistoryItems = useMemo(() => {
     return walletTransfers.slice(0, WALLET_PANEL_HISTORY_LIMIT);
@@ -1122,20 +1140,19 @@ export default function PromotionPage() {
   return (
     <main className="relative w-full min-h-screen overflow-hidden bg-[#030711] text-slate-100">
       <LanguageSelector
+        disableGoogleTranslate
         variant="inline"
-        className="fixed right-2 top-2 z-[2600] min-h-[42px] justify-center rounded-lg border border-cyan-300/70 bg-slate-950/95 px-3 py-2 text-xs shadow-[0_16px_36px_-16px_rgba(34,211,238,0.92)] ring-1 ring-cyan-300/30 backdrop-blur-xl sm:right-4 sm:top-4 [&>select]:border-slate-600/80 [&>select]:bg-slate-950/95 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-cyan-100"
+        className="fixed left-2 right-2 top-2 z-[2600] min-h-[42px] w-auto justify-center rounded-lg border border-cyan-300/70 bg-slate-950/95 px-3 py-2 text-xs shadow-[0_16px_36px_-16px_rgba(34,211,238,0.92)] ring-1 ring-cyan-300/30 backdrop-blur-xl sm:left-auto sm:right-4 sm:top-4 [&>select]:border-slate-600/80 [&>select]:bg-slate-950/95 [&>select]:text-slate-50 [&>select]:focus:border-cyan-300 [&>select]:focus:ring-cyan-300/25 [&>span]:text-cyan-100 max-sm:[&>select]:min-w-0 max-sm:[&>select]:flex-1"
       />
 
       <aside
-        className={`fixed left-2 top-2 z-[140] w-[min(calc(100vw-1rem),366px)] transition-all sm:left-auto sm:right-4 sm:top-24 ${
-          walletPanelOpen ? "" : "max-sm:w-[212px]"
-        }`}
+        className="fixed left-2 top-[76px] z-[140] w-[calc(100vw-1rem)] transition-all sm:left-auto sm:right-4 sm:top-24 sm:w-[min(calc(100vw-1rem),366px)]"
       >
         <section className="overflow-hidden rounded-2xl border border-cyan-300/35 bg-slate-950/88 shadow-[0_18px_42px_-24px_rgba(34,211,238,0.72)] backdrop-blur-xl">
           <header className="flex items-center justify-between border-b border-slate-700/70 px-3 py-2.5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">My Wallet</p>
-              <p className="text-[11px] text-slate-400">고정 지갑 패널</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">{copy.wallet.title}</p>
+              <p className="text-[11px] text-slate-400">{copy.wallet.subtitle}</p>
             </div>
             <div className="flex items-center gap-1.5">
               {walletAddress && (
@@ -1145,7 +1162,7 @@ export default function PromotionPage() {
                   className="rounded-lg border border-cyan-400/50 bg-cyan-500/14 px-2 py-1 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
                   title={walletAddress}
                 >
-                  {walletAddressCopied ? "복사됨" : "주소복사"}
+                  {walletAddressCopied ? copy.wallet.copied : copy.wallet.copyShort}
                 </button>
               )}
               <button
@@ -1153,7 +1170,7 @@ export default function PromotionPage() {
                 onClick={() => setWalletPanelOpen((previous) => !previous)}
                 className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100"
               >
-                {walletPanelOpen ? "접기" : "열기"}
+                {walletPanelOpen ? copy.wallet.collapse : copy.wallet.expand}
               </button>
             </div>
           </header>
@@ -1172,9 +1189,9 @@ export default function PromotionPage() {
                       sponsorGas: true,
                     }}
                     theme="dark"
-                    locale="ko_KR"
+                    locale={copy.connectButtonLocale}
                     connectButton={{
-                      label: "지갑연결하기",
+                      label: copy.wallet.connectLabel,
                       style: {
                         width: "100%",
                         minHeight: "42px",
@@ -1194,19 +1211,19 @@ export default function PromotionPage() {
                     }}
                     appMetadata={{
                       name: "OneClick Stable",
-                      description: "Promotion wallet panel",
+                      description: copy.wallet.title,
                       url: "https://www.stable.makeup",
                       logoUrl: "https://www.stable.makeup/logo.png",
                     }}
                   />
                   <p className="text-xs text-slate-400">
-                    로그인하면 입금(주소/QR), 출금, 전송내역을 이 패널에서 바로 확인할 수 있습니다.
+                    {copy.wallet.disconnectedHelp}
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="rounded-xl border border-slate-700/70 bg-slate-900/70 px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">Connected Wallet</p>
+                    <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">{copy.wallet.connectedWallet}</p>
                     {walletExplorerUrl ? (
                       <>
                         <a
@@ -1242,18 +1259,18 @@ export default function PromotionPage() {
                         onClick={() => void copyWalletAddress()}
                         className="rounded-lg border border-cyan-400/50 bg-cyan-500/14 px-2 py-1 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
                       >
-                        주소 복사
+                        {copy.wallet.copyAddress}
                       </button>
                       <button
                         type="button"
                         onClick={() => void disconnectWallet()}
                         className="rounded-lg border border-rose-400/50 bg-rose-500/14 px-2 py-1 text-[11px] font-semibold text-rose-100 transition hover:bg-rose-400/20"
                       >
-                        연결해제
+                        {copy.wallet.disconnect}
                       </button>
                       {walletAddressCopied && (
                         <span className="rounded-lg border border-emerald-400/50 bg-emerald-500/16 px-2 py-1 text-[11px] font-semibold text-emerald-100">
-                          복사됨
+                          {copy.wallet.copied}
                         </span>
                       )}
                     </div>
@@ -1269,7 +1286,7 @@ export default function PromotionPage() {
                           : "border-slate-700/80 bg-slate-900/70 text-slate-300 hover:border-slate-500/80"
                       }`}
                     >
-                      입금
+                      {copy.wallet.tabs.deposit}
                     </button>
                     <button
                       type="button"
@@ -1280,7 +1297,7 @@ export default function PromotionPage() {
                           : "border-slate-700/80 bg-slate-900/70 text-slate-300 hover:border-slate-500/80"
                       }`}
                     >
-                      출금
+                      {copy.wallet.tabs.withdraw}
                     </button>
                     <button
                       type="button"
@@ -1291,14 +1308,14 @@ export default function PromotionPage() {
                           : "border-slate-700/80 bg-slate-900/70 text-slate-300 hover:border-slate-500/80"
                       }`}
                     >
-                      전송내역
+                      {copy.wallet.tabs.history}
                     </button>
                   </nav>
 
                   {walletPanelTab === "deposit" && (
                     <section className="rounded-xl border border-emerald-400/35 bg-emerald-950/26 p-2.5">
                       <p className="text-[10px] uppercase tracking-[0.1em] text-emerald-200/90">
-                        Deposit Address
+                        {copy.wallet.depositAddress}
                       </p>
                       <div className="mt-2 grid gap-2 min-[360px]:grid-cols-[126px_minmax(0,1fr)]">
                         <div className="flex items-center justify-center rounded-lg border border-emerald-300/45 bg-slate-950/75 p-2">
@@ -1318,7 +1335,7 @@ export default function PromotionPage() {
                         </div>
                         <div className="rounded-lg border border-emerald-300/35 bg-slate-950/72 p-2">
                           <p className="text-[10px] uppercase tracking-[0.08em] text-emerald-200/90">
-                            Wallet Address
+                            {copy.wallet.walletAddress}
                           </p>
                           {walletExplorerUrl ? (
                             <a
@@ -1336,7 +1353,7 @@ export default function PromotionPage() {
                             </p>
                           )}
                           <p className="mt-1 text-[11px] text-emerald-200/80">
-                            위 주소와 QR 코드로 입금하면 됩니다.
+                            {copy.wallet.depositHelp}
                           </p>
                         </div>
                       </div>
@@ -1346,16 +1363,16 @@ export default function PromotionPage() {
                   {walletPanelTab === "withdraw" && (
                     <section className="space-y-2 rounded-xl border border-amber-400/35 bg-amber-950/25 p-2.5">
                       <p className="text-[10px] uppercase tracking-[0.1em] text-amber-200/90">
-                        Withdraw
+                        {copy.wallet.withdrawTitle}
                       </p>
                       <p className="text-xs text-amber-100/90">
-                        출금은 전용 화면에서 진행합니다. 연결된 지갑 주소 기준으로 진행하세요.
+                        {copy.wallet.withdrawHelp}
                       </p>
                       <Link
                         href={`/${lang}/promotion/withdraw`}
                         className="inline-flex min-h-[38px] w-full items-center justify-center rounded-lg border border-amber-300/65 bg-amber-500/20 px-3 py-2 text-xs font-semibold text-amber-50 transition hover:border-amber-200/85 hover:bg-amber-400/28"
                       >
-                        출금 화면 열기
+                        {copy.wallet.openWithdraw}
                       </Link>
                     </section>
                   )}
@@ -1364,20 +1381,20 @@ export default function PromotionPage() {
                     <section className="space-y-2 rounded-xl border border-cyan-400/35 bg-cyan-950/25 p-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[10px] uppercase tracking-[0.1em] text-cyan-200/90">
-                          Transfer History
+                          {copy.wallet.transferHistory}
                         </p>
                         <button
                           type="button"
                           onClick={() => void fetchWalletTransfers()}
                           className="rounded-md border border-cyan-300/55 bg-cyan-500/16 px-1.5 py-1 text-[10px] font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
                         >
-                          새로고침
+                          {copy.wallet.refresh}
                         </button>
                       </div>
 
                       {walletTransfersLoading && (
                         <div className="rounded-lg border border-slate-700/80 bg-slate-950/72 px-2 py-2 text-xs text-slate-400">
-                          전송내역을 불러오는 중입니다.
+                          {copy.wallet.loadingHistory}
                         </div>
                       )}
 
@@ -1389,7 +1406,7 @@ export default function PromotionPage() {
 
                       {!walletTransfersLoading && !walletTransferError && walletHistoryItems.length === 0 && (
                         <div className="rounded-lg border border-slate-700/80 bg-slate-950/72 px-2 py-2 text-xs text-slate-400">
-                          표시할 전송내역이 없습니다.
+                          {copy.wallet.emptyHistory}
                         </div>
                       )}
 
@@ -1417,14 +1434,14 @@ export default function PromotionPage() {
                                         : "border-emerald-400/55 bg-emerald-500/16 text-emerald-100"
                                     }`}
                                   >
-                                    {isSend ? "출금" : "입금"}
+                                    {isSend ? copy.transactionTypes.withdrawn : copy.transactionTypes.deposited}
                                   </span>
                                   <span className="font-mono text-[10px] text-cyan-100">
                                     {formatUsdt(usdtValue)} USDT
                                   </span>
                                 </div>
                                 <p className="mt-1 font-mono text-[10px] text-slate-300">
-                                  상대:{" "}
+                                  {copy.wallet.counterparty}:{" "}
                                   {counterpartyUrl ? (
                                     <a
                                       href={counterpartyUrl}
@@ -1440,7 +1457,7 @@ export default function PromotionPage() {
                                   )}
                                 </p>
                                 <p className="mt-1 font-mono text-[10px] text-slate-500">
-                                  {formatWalletTransferTime(tx?.timestamp)}
+                                  {formatWalletTransferTime(tx?.timestamp, copy.numberLocale)}
                                 </p>
                                 {explorerUrl ? (
                                   <a
@@ -1476,7 +1493,7 @@ export default function PromotionPage() {
         <div className="promo-orb promo-orb-c" />
       </div>
 
-      <section className="promo-shell relative mx-auto w-full max-w-[1320px] space-y-3 px-2.5 pb-3 pt-[5.25rem] sm:space-y-4 sm:px-5 sm:pb-5 sm:pt-5 lg:px-8">
+      <section className="promo-shell relative mx-auto w-full max-w-[1320px] space-y-3 px-2.5 pb-3 pt-[9.75rem] sm:space-y-4 sm:px-5 sm:pb-5 sm:pt-5 lg:px-8">
         <header
           className={`relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950/86 p-3.5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.9)] backdrop-blur sm:rounded-[24px] sm:p-5 ${isHeroBursting ? "promo-hero-burst" : ""}`}
         >
@@ -1486,10 +1503,10 @@ export default function PromotionPage() {
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className="promo-live-dot h-2.5 w-2.5 rounded-full bg-emerald-300" />
               <span className="promo-live-caption text-[10px] uppercase tracking-[0.18em] text-emerald-100/95 sm:text-xs sm:tracking-[0.22em]">
-                VASP Operated Realtime Hub
+                {copy.hero.liveCaption}
               </span>
               <span className="rounded-full border border-emerald-300/65 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-50 sm:text-[11px]">
-                VASP 운영
+                {copy.hero.vaspBadge}
               </span>
             </div>
             <div className="promo-nav-links grid w-full grid-cols-1 gap-1.5 min-[390px]:grid-cols-3 sm:flex sm:w-auto sm:flex-wrap">
@@ -1517,19 +1534,18 @@ export default function PromotionPage() {
           <div className="relative mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-[1.2fr_1fr]">
             <div>
               <h1 className="promo-hero-title text-[1.55rem] font-semibold leading-tight sm:text-[2.05rem]">
-                <span className="promo-title-shine">VASP 운영</span> 기반 USDT 정산 플랫폼
+                <span className="promo-title-shine">{copy.hero.titleLead}</span> {copy.hero.titleRest}
               </h1>
               <p className="promo-hero-copy mt-2 max-w-xl text-[12.5px] leading-relaxed text-slate-300 sm:text-sm">
-                입출금, 주문, 정산 상태를 한 화면에서 확인하는 실시간 USDT 운영 홈입니다.
-                핵심 지표와 최근 이벤트를 컴팩트하게 제공합니다.
+                {copy.hero.description}
               </p>
 
               <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] sm:text-[11px]">
                 <span className="rounded-full border border-emerald-300/50 bg-emerald-500/15 px-2.5 py-1 text-emerald-100">
-                  VASP 운영 모니터링
+                  {copy.hero.badges[0]}
                 </span>
                 <span className="rounded-full border border-cyan-300/50 bg-cyan-500/15 px-2.5 py-1 text-cyan-100">
-                  USDT 온체인 정산 추적
+                  {copy.hero.badges[1]}
                 </span>
               </div>
 
@@ -1538,19 +1554,19 @@ export default function PromotionPage() {
                   href={`/${lang}/realtime-settlement`}
                   className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-emerald-300/80 bg-emerald-500/28 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/34"
                 >
-                  정산 라이브 보기
+                  {copy.hero.ctas.settlement}
                 </Link>
                 <Link
                   href={`/${lang}/realtime-buyorder`}
                   className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-cyan-300/70 bg-cyan-400/20 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/28"
                 >
-                  BuyOrder 라이브 보기
+                  {copy.hero.ctas.buyOrder}
                 </Link>
                 <Link
                   href={`/${lang}/realtime-banktransfer`}
                   className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-slate-500/70 bg-slate-800/70 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-slate-100 transition hover:-translate-y-0.5 hover:border-slate-300/70"
                 >
-                  입출금 라이브 보기
+                  {copy.hero.ctas.banktransfer}
                 </Link>
               </div>
 
@@ -1570,7 +1586,9 @@ export default function PromotionPage() {
                           isMemberRegistered ? "text-emerald-200/95" : "text-sky-200/95"
                         }`}
                       >
-                        {isMemberRegistered ? "Member Registered" : "Member Signup"}
+                        {isMemberRegistered
+                          ? copy.hero.member.registeredLabel
+                          : copy.hero.member.signupLabel}
                       </p>
                       <p
                         className={`mt-1 text-xs sm:text-sm ${
@@ -1578,10 +1596,12 @@ export default function PromotionPage() {
                         }`}
                       >
                         {memberProfileLoading
-                          ? "회원 상태를 확인하는 중입니다."
+                          ? copy.hero.member.loading
                           : isMemberRegistered
-                            ? `${memberProfile?.nickname || "회원"}님, 가입이 완료되었습니다. 회원정보를 수정하려면 이동하세요.`
-                            : "지갑 연결 완료. 회원가입에서 닉네임/아바타/연락처를 등록하세요."}
+                            ? copy.hero.member.registeredMessage(
+                                memberProfile?.nickname || copy.hero.member.registeredFallbackName,
+                              )
+                            : copy.hero.member.signupMessage}
                       </p>
                     </div>
                     <span
@@ -1591,7 +1611,7 @@ export default function PromotionPage() {
                           : "border-sky-100/70 bg-sky-300/20 text-sky-50 group-hover:bg-sky-300/32"
                       }`}
                     >
-                      {isMemberRegistered ? "회원정보 수정" : "회원가입"}
+                      {isMemberRegistered ? copy.hero.member.editButton : copy.hero.member.signupButton}
                     </span>
                   </div>
                 </Link>
@@ -1599,13 +1619,16 @@ export default function PromotionPage() {
 
               <div className="promo-status-grid mt-3 grid gap-1.5 text-[11px] text-slate-300 sm:flex sm:flex-wrap">
                 <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2 py-1 sm:w-auto">
-                  Connection: <span className="font-semibold text-emerald-200">{connectionState}</span>
+                  {copy.hero.status.connection}: <span className="font-semibold text-emerald-200">{connectionState}</span>
                 </span>
                 <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2 py-1 sm:w-auto">
-                  Sync: <span className="font-semibold text-emerald-200">{isSyncing ? "running" : "idle"}</span>
+                  {copy.hero.status.sync}:{" "}
+                  <span className="font-semibold text-emerald-200">
+                    {isSyncing ? copy.common.running : copy.common.idle}
+                  </span>
                 </span>
                 <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2 py-1 sm:w-auto">
-                  Last Update:{" "}
+                  {copy.hero.status.lastUpdate}:{" "}
                   <span className="font-semibold text-emerald-200">{latestTimeInfo.relativeLabel}</span>
                 </span>
               </div>
@@ -1613,35 +1636,35 @@ export default function PromotionPage() {
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <article className="rounded-xl border border-emerald-300/45 bg-emerald-950/30 p-3 shadow-lg shadow-black/20 sm:col-span-2">
-                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">핵심 지표 | Settlement USDT</p>
+                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">{copy.kpi.settlementUsdtTitle}</p>
                 <p className="promo-kpi-value mt-1.5 text-[1.7rem] font-bold leading-none text-emerald-50 sm:text-[1.95rem]">
                   {formatUsdt(summary.settlementUsdt)}
                   <span className="ml-1 text-sm font-semibold text-emerald-200">USDT</span>
                 </p>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
                   <span className="rounded-md border border-emerald-300/40 bg-emerald-500/12 px-2 py-1 text-emerald-100">
-                    정산완료 {summary.settlementCount.toLocaleString("ko-KR")}건
+                    {copy.kpi.settlementCompletedPrefix} {formatCount(summary.settlementCount, copy)}
                   </span>
                   <span className="text-emerald-200/90">
-                    USDT 기준 비중 {formatPercent(summary.settlementUsdtRatio)}
+                    {copy.kpi.settlementUsdtRatioPrefix} {formatPercent(summary.settlementUsdtRatio)}
                   </span>
                 </div>
               </article>
 
               <article className="rounded-xl border border-cyan-500/40 bg-cyan-950/28 p-3 shadow-lg shadow-black/20">
-                <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">플랫폼 USDT</p>
+                <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">{copy.kpi.platformUsdtTitle}</p>
                 <p className="mt-1.5 text-lg font-semibold leading-tight text-cyan-50">
                   {formatUsdt(summary.totalUsdt)} USDT
                 </p>
-                <p className="mt-1.5 text-[11px] text-cyan-300/80">BuyOrder 누적 유동량</p>
+                <p className="mt-1.5 text-[11px] text-cyan-300/80">{copy.kpi.platformUsdtDescription}</p>
               </article>
 
               <article className="rounded-xl border border-amber-500/40 bg-amber-950/28 p-3 shadow-lg shadow-black/20">
-                <p className="text-xs uppercase tracking-[0.08em] text-amber-200">정산 이벤트 비중</p>
+                <p className="text-xs uppercase tracking-[0.08em] text-amber-200">{copy.kpi.settlementEventRatioTitle}</p>
                 <p className="promo-kpi-value mt-1.5 text-[1.65rem] font-semibold leading-none text-amber-50">
                   {formatPercent(summary.settlementCountRatio)}
                 </p>
-                <p className="mt-1.5 text-[11px] text-amber-300/80">BuyOrder 이벤트 대비</p>
+                <p className="mt-1.5 text-[11px] text-amber-300/80">{copy.kpi.settlementEventRatioDescription}</p>
               </article>
             </div>
           </div>
@@ -1665,39 +1688,22 @@ export default function PromotionPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center rounded-full border border-cyan-300/55 bg-cyan-400/14 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
-                  Scan Explorer
+                  {copy.scan.badges[0]}
                 </span>
                 <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                  Realtime Transfer Trace
+                  {copy.scan.badges[1]}
                 </span>
               </div>
 
               <h2 className="mt-3 text-lg font-semibold tracking-tight text-cyan-50 sm:text-[1.55rem]">
-                프로모션 흐름을 확인했다면 실시간 전송내역으로 바로 이어서 보세요
+                {copy.scan.title}
               </h2>
               <p className="mt-2 max-w-3xl text-[13px] leading-6 text-cyan-100/82 sm:text-sm">
-                프로모션 참여, 출금, 지갑 연결 이후에는 Scan Explorer에서 실제 USDT 이동 내역과 지갑 흐름을
-                바로 확인할 수 있습니다. 참여 흐름과 온체인 추적을 한 화면 흐름처럼 연결합니다.
+                {copy.scan.description}
               </p>
 
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                {[
-                  {
-                    id: "scan-route-live",
-                    title: "실시간 전송내역",
-                    description: "최신 전송 흐름과 감시 지갑 활동을 확인합니다.",
-                  },
-                  {
-                    id: "scan-route-address",
-                    title: "지갑 상세 추적",
-                    description: "주소별 이동 이력과 배치 전송을 개별로 추적합니다.",
-                  },
-                  {
-                    id: "scan-route-proof",
-                    title: "온체인 검증",
-                    description: "BscScan 기반 트랜잭션 링크로 실제 체인 상태를 연결합니다.",
-                  },
-                ].map((item) => (
+                {copy.scan.cards.map((item) => (
                   <article
                     key={item.id}
                     className="rounded-[20px] border border-white/10 bg-black/18 px-3.5 py-3 shadow-[0_18px_34px_-26px_rgba(15,23,42,0.82)]"
@@ -1716,18 +1722,18 @@ export default function PromotionPage() {
                 </div>
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-200/82">
-                    Destination
+                    {copy.scan.destination}
                   </div>
                   <div className="mt-1 text-base font-semibold text-white">/{lang}/scan</div>
                 </div>
               </div>
 
               <div className="mt-4 rounded-[18px] border border-white/10 bg-white/5 p-3.5">
-                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">What you get</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">{copy.scan.whatYouGet}</div>
                 <ul className="mt-2 space-y-1.5 text-[12px] leading-5 text-slate-200/88">
-                  <li>실시간 USDT 전송내역 확인</li>
-                  <li>주소별 전송 히스토리 이동</li>
-                  <li>트랜잭션 상세와 BscScan 연결</li>
+                  {copy.scan.benefits.map((benefit) => (
+                    <li key={benefit}>{benefit}</li>
+                  ))}
                 </ul>
               </div>
 
@@ -1736,13 +1742,13 @@ export default function PromotionPage() {
                   href={`/${lang}/scan`}
                   className="inline-flex min-h-[44px] items-center justify-center rounded-[16px] border border-cyan-200/75 bg-cyan-400/85 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
                 >
-                  Scan Explorer 열기
+                  {copy.scan.openExplorer}
                 </Link>
                 <Link
                   href={`/${lang}/scan/integrations`}
                   className="inline-flex min-h-[42px] items-center justify-center rounded-[16px] border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
-                  연동 구조 보기
+                  {copy.scan.openIntegrations}
                 </Link>
               </div>
             </div>
@@ -1751,30 +1757,30 @@ export default function PromotionPage() {
 
         <section className="relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/70 p-3.5 shadow-lg shadow-black/20 sm:p-4">
           <span className="mb-2 inline-flex rounded-full border border-emerald-200/55 bg-emerald-400/14 px-2 py-0.5 text-[10px] font-semibold tracking-[0.1em] text-emerald-100 sm:absolute sm:right-4 sm:top-4 sm:mb-0">
-            SETTLEMENT
+            {copy.settlement.tag}
           </span>
           <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_1fr]">
             <div>
-              <p className="text-xs uppercase tracking-[0.1em] text-emerald-200/85">Settlement Spotlight</p>
+              <p className="text-xs uppercase tracking-[0.1em] text-emerald-200/85">{copy.settlement.eyebrow}</p>
               <h2 className="promo-spotlight-title mt-1 text-base font-semibold text-emerald-50 sm:text-lg">
-                정산 상태를 우선 노출하는 실시간 공시 카드
+                {copy.settlement.title}
               </h2>
               <p className="mt-1.5 max-w-3xl text-[12.5px] leading-relaxed text-emerald-100/78 sm:text-[13px]">
-                최근 정산 건수, 금액, 처리 시점을 핵심만 요약해 제공합니다.
+                {copy.settlement.description}
               </p>
 
               <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                 <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
-                  정산 이벤트 {summary.settlementCount.toLocaleString("ko-KR")}건
+                  {copy.settlement.eventPrefix} {formatCount(summary.settlementCount, copy)}
                 </span>
                 <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
                   {formatUsdt(summary.settlementUsdt)} USDT
                 </span>
                 <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
-                  {formatKrw(summary.settlementKrw)} KRW
+                  {formatKrw(summary.settlementKrw, copy.numberLocale)} KRW
                 </span>
                 <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
-                  정산 비중 {formatPercent(summary.settlementCountRatio)}
+                  {copy.settlement.ratioPrefix} {formatPercent(summary.settlementCountRatio)}
                 </span>
               </div>
             </div>
@@ -1788,32 +1794,32 @@ export default function PromotionPage() {
                 <div>
                   <p className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.1em] text-emerald-100">
                     <span className="promo-live-dot h-2 w-2 rounded-full bg-emerald-300" />
-                    Realtime Settlement Log
+                    {copy.settlement.realtimeLog}
                   </p>
                   <h3 className="promo-settlement-title mt-1 text-sm font-semibold leading-tight text-emerald-50">
-                    최신 정산 이벤트 즉시 확인
+                    {copy.settlement.latestTitle}
                   </h3>
                   <p className="mt-1 text-[11px] text-emerald-200/90">
                     {latestSettlementTimeInfo
-                      ? `최근 정산 이벤트 ${latestSettlementTimeInfo.relativeLabel}`
-                      : "최근 정산 이벤트 대기 중"}
+                      ? copy.settlement.latestPrefix(latestSettlementTimeInfo.relativeLabel)
+                      : copy.settlement.latestWaiting}
                   </p>
                 </div>
 
                 <span className="promo-settlement-ping self-start rounded-full border border-emerald-200/75 bg-emerald-400/24 px-2 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50 sm:self-auto">
-                  LIVE
+                  {copy.common.live}
                 </span>
               </div>
 
               <div className="mt-2.5 grid grid-cols-1 gap-1.5 text-xs sm:grid-cols-2">
                 <div className="rounded-lg border border-emerald-400/35 bg-emerald-500/12 px-2 py-1.5 text-emerald-100">
-                  <p className="text-[10px] uppercase tracking-[0.09em] text-emerald-200/90">Settlement Count</p>
+                  <p className="text-[10px] uppercase tracking-[0.09em] text-emerald-200/90">{copy.settlement.countLabel}</p>
                   <p className="mt-1 text-sm font-semibold tabular-nums">
-                    {summary.settlementCount.toLocaleString("ko-KR")}건
+                    {formatCount(summary.settlementCount, copy)}
                   </p>
                 </div>
                 <div className="rounded-lg border border-cyan-400/35 bg-cyan-500/12 px-2 py-1.5 text-cyan-100">
-                  <p className="text-[10px] uppercase tracking-[0.09em] text-cyan-200/90">Settlement USDT</p>
+                  <p className="text-[10px] uppercase tracking-[0.09em] text-cyan-200/90">{copy.settlement.usdtLabel}</p>
                   <p className="mt-1 text-sm font-semibold tabular-nums">
                     {formatUsdt(summary.settlementUsdt)}{" "}
                     <span className="text-[11px] font-bold tracking-[0.08em]">USDT</span>
@@ -1825,7 +1831,7 @@ export default function PromotionPage() {
                 href={`/${lang}/realtime-settlement`}
                 className="promo-settlement-btn mt-2.5 inline-flex min-h-[40px] w-full items-center justify-between gap-2 rounded-lg border border-emerald-200/65 bg-emerald-400/22 px-3 py-1.5 text-xs font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/30"
               >
-                <span>정산 대시보드 바로가기</span>
+                <span>{copy.settlement.dashboardCta}</span>
                 <span aria-hidden className="text-base leading-none">
                   →
                 </span>
@@ -1834,7 +1840,11 @@ export default function PromotionPage() {
               <ul className="mt-2.5 space-y-1.5 sm:space-y-2">
                 {settlementBuyEvents.slice(0, 3).map((item) => {
                   const isHighlighted = item.highlightUntil > nowMs;
-                  const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                  const timeInfo = getRelativeTimeInfo(
+                    item.data.publishedAt || item.receivedAt,
+                    nowMs,
+                    copy.locale,
+                  );
 
                   return (
                     <li
@@ -1847,7 +1857,7 @@ export default function PromotionPage() {
                     >
                       <div className="promo-event-row flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between">
                         <span className="promo-event-store truncate text-xs text-emerald-50">
-                          {item.data.store?.name || "Unknown Store"}
+                          {item.data.store?.name || copy.common.unknownStore}
                         </span>
                         <span className="promo-time-badge font-mono text-[11px] text-emerald-200">
                           {timeInfo.relativeLabel}
@@ -1863,7 +1873,7 @@ export default function PromotionPage() {
 
                 {settlementBuyEvents.length === 0 && (
                   <li className="rounded-lg border border-slate-700/70 bg-slate-900/70 px-2.5 py-3 text-xs text-slate-400">
-                    수신된 정산 이벤트가 없습니다.
+                    {copy.settlement.empty}
                   </li>
                 )}
               </ul>
@@ -1875,11 +1885,11 @@ export default function PromotionPage() {
           <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/72 p-3 shadow-lg shadow-black/20 sm:p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-xs uppercase tracking-[0.08em] text-emerald-300">Banktransfer Live</p>
-                <h2 className="mt-1 text-lg font-semibold text-slate-100">입출금 실시간 하이라이트</h2>
+                <p className="text-xs uppercase tracking-[0.08em] text-emerald-300">{copy.liveSections.bankEyebrow}</p>
+                <h2 className="mt-1 text-lg font-semibold text-slate-100">{copy.liveSections.bankTitle}</h2>
               </div>
               <span className="rounded-full border border-emerald-300/60 bg-emerald-400/20 px-2 py-1 text-[10px] font-semibold text-emerald-50 sm:text-xs">
-                LIVE
+                {copy.common.live}
               </span>
             </div>
 
@@ -1899,11 +1909,11 @@ export default function PromotionPage() {
                     )}
                     <div className="min-w-0">
                       <p className="promo-event-store truncate text-sm font-medium text-slate-100">
-                        {latestBank.data.store?.name || latestBank.data.storecode || "Unknown Store"}
+                        {latestBank.data.store?.name || latestBank.data.storecode || copy.common.unknownStore}
                       </p>
                       <p className="mt-1 text-xs text-slate-400">
-                        {getTransactionTypeLabel(latestBank.data.transactionType)} /{" "}
-                        {formatKrw(latestBank.data.amount)} KRW
+                        {getTransactionTypeLabel(latestBank.data.transactionType, copy)} /{" "}
+                        {formatKrw(latestBank.data.amount, copy.numberLocale)} KRW
                       </p>
                     </div>
                   </div>
@@ -1912,6 +1922,7 @@ export default function PromotionPage() {
                       getRelativeTimeInfo(
                         latestBank.data.publishedAt || latestBank.receivedAt,
                         nowMs,
+                        copy.locale,
                       ).tone,
                     )}`}
                   >
@@ -1919,6 +1930,7 @@ export default function PromotionPage() {
                       getRelativeTimeInfo(
                         latestBank.data.publishedAt || latestBank.receivedAt,
                         nowMs,
+                        copy.locale,
                       ).relativeLabel
                     }
                   </span>
@@ -1926,14 +1938,18 @@ export default function PromotionPage() {
               </div>
             ) : (
               <div className="mt-4 rounded-xl border border-slate-700/80 bg-slate-950/70 p-3 text-sm text-slate-400">
-                아직 수신된 입출금 이벤트가 없습니다.
+                {copy.liveSections.bankEmpty}
               </div>
             )}
 
             <ul className="mt-2.5 space-y-1.5">
               {sortedBankEvents.slice(0, 6).map((item) => {
                 const isHighlighted = item.highlightUntil > Date.now();
-                const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                const timeInfo = getRelativeTimeInfo(
+                  item.data.publishedAt || item.receivedAt,
+                  nowMs,
+                  copy.locale,
+                );
 
                 return (
                   <li
@@ -1952,14 +1968,14 @@ export default function PromotionPage() {
                               item.data.transactionType,
                             )}`}
                           >
-                            {getTransactionTypeLabel(item.data.transactionType)}
+                            {getTransactionTypeLabel(item.data.transactionType, copy)}
                           </span>
                           <span className="promo-event-store truncate text-xs text-slate-300">
                             {item.data.store?.name || item.data.storecode || "-"}
                           </span>
                         </div>
                         <p className="mt-1 text-sm font-semibold tabular-nums text-slate-100">
-                          {formatKrw(item.data.amount)} KRW
+                          {formatKrw(item.data.amount, copy.numberLocale)} KRW
                         </p>
                       </div>
                       <span
@@ -1979,11 +1995,11 @@ export default function PromotionPage() {
           <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/72 p-3 shadow-lg shadow-black/20 sm:p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">BuyOrder USDT Live</p>
-                <h2 className="mt-1 text-lg font-semibold text-slate-100">USDT 주문 상태 하이라이트</h2>
+                <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">{copy.liveSections.buyEyebrow}</p>
+                <h2 className="mt-1 text-lg font-semibold text-slate-100">{copy.liveSections.buyTitle}</h2>
               </div>
               <span className="rounded-full border border-cyan-300/60 bg-cyan-400/20 px-2 py-1 text-[10px] font-semibold text-cyan-50 sm:text-xs">
-                LIVE
+                {copy.common.live}
               </span>
             </div>
 
@@ -1997,7 +2013,7 @@ export default function PromotionPage() {
                           latestBuy.data.statusTo,
                         )}`}
                       >
-                        {getBuyStatusLabel(latestBuy.data.statusTo)}
+                        {getBuyStatusLabel(latestBuy.data.statusTo, copy)}
                       </span>
                       <span className="promo-event-store truncate text-xs text-slate-300">
                         {latestBuy.data.store?.name || "-"}
@@ -2007,7 +2023,7 @@ export default function PromotionPage() {
                       {formatUsdt(latestBuy.data.amountUsdt)} USDT
                     </p>
                     <p className="mt-1 font-mono text-[11px] text-slate-400">
-                      Buyer:{" "}
+                      {copy.liveSections.buyer}:{" "}
                       {latestBuyWalletExplorerUrl ? (
                         <a
                           href={latestBuyWalletExplorerUrl}
@@ -2025,24 +2041,28 @@ export default function PromotionPage() {
                   </div>
                   <span
                     className={`promo-time-badge self-start rounded-md border px-2 py-1 font-mono text-[11px] sm:self-auto sm:shrink-0 ${getRelativeTimeBadgeClassName(
-                      getRelativeTimeInfo(latestBuy.data.publishedAt || latestBuy.receivedAt, nowMs)
+                      getRelativeTimeInfo(latestBuy.data.publishedAt || latestBuy.receivedAt, nowMs, copy.locale)
                         .tone,
                     )}`}
                   >
-                    {getRelativeTimeInfo(latestBuy.data.publishedAt || latestBuy.receivedAt, nowMs).relativeLabel}
+                    {getRelativeTimeInfo(latestBuy.data.publishedAt || latestBuy.receivedAt, nowMs, copy.locale).relativeLabel}
                   </span>
                 </div>
               </div>
             ) : (
               <div className="mt-4 rounded-xl border border-slate-700/80 bg-slate-950/70 p-3 text-sm text-slate-400">
-                아직 수신된 BuyOrder 이벤트가 없습니다.
+                {copy.liveSections.buyEmpty}
               </div>
             )}
 
             <ul className="mt-2.5 space-y-1.5">
               {sortedBuyEvents.slice(0, 6).map((item) => {
                 const isHighlighted = item.highlightUntil > Date.now();
-                const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                const timeInfo = getRelativeTimeInfo(
+                  item.data.publishedAt || item.receivedAt,
+                  nowMs,
+                  copy.locale,
+                );
                 const buyerWalletExplorerUrl = getExplorerAddressUrl(item.data.buyerWalletAddress);
 
                 return (
@@ -2062,7 +2082,7 @@ export default function PromotionPage() {
                               item.data.statusTo,
                             )}`}
                           >
-                            {getBuyStatusLabel(item.data.statusTo)}
+                            {getBuyStatusLabel(item.data.statusTo, copy)}
                           </span>
                           <span className="promo-event-store truncate text-xs text-slate-300">
                             {item.data.store?.name || "-"}
@@ -2072,7 +2092,7 @@ export default function PromotionPage() {
                           {formatUsdt(item.data.amountUsdt)} USDT
                         </p>
                         <p className="mt-1 font-mono text-[11px] text-slate-400">
-                          Wallet:{" "}
+                          {copy.liveSections.wallet}:{" "}
                           {buyerWalletExplorerUrl ? (
                             <a
                               href={buyerWalletExplorerUrl}
@@ -2105,8 +2125,8 @@ export default function PromotionPage() {
 
         <section className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/72 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-3 py-2.5 sm:px-4">
-            <p className="font-semibold text-slate-100">실시간 이벤트 티커</p>
-            <p className="text-[11px] text-slate-400">입출금/주문/정산 이벤트를 순환 표시합니다.</p>
+            <p className="font-semibold text-slate-100">{copy.ticker.title}</p>
+            <p className="text-[11px] text-slate-400">{copy.ticker.description}</p>
           </div>
           <div className="overflow-hidden px-3 py-2.5">
             <div className="promo-marquee-track">

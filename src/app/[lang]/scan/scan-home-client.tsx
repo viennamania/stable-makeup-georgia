@@ -18,6 +18,7 @@ import { chain as configuredChain } from "@/app/config/contractAddresses";
 import {
   type UsdtTransactionHashRealtimeEvent,
 } from "@lib/ably/constants";
+import LanguageSelector from "@/components/LanguageSelector";
 import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
 import {
   formatDateTime,
@@ -1137,6 +1138,12 @@ export default function ScanHomeClientPage({
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
+      <LanguageSelector
+        disableGoogleTranslate
+        variant="inline"
+        className="fixed right-2 top-2 z-[2600] min-h-[42px] justify-center rounded-lg border border-[#f0ddb0] bg-white/95 px-3 py-2 text-xs shadow-[0_16px_36px_-18px_rgba(148,100,0,0.45)] ring-1 ring-[#f8edc6] backdrop-blur-xl sm:right-4 sm:top-4 [&>select]:border-[#e6dcc5] [&>select]:bg-white [&>select]:text-[#202939] [&>select]:focus:border-[#f0b90b] [&>select]:focus:ring-[#f8edc6] [&>span]:text-[#8b6c1f]"
+      />
+
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-2.5 py-4 sm:gap-5 sm:px-5 sm:py-5 lg:px-8">
         <section className="overflow-hidden rounded-[26px] border border-[#2a3140] bg-[#111827] text-white shadow-[0_30px_80px_-52px_rgba(15,23,42,0.9)]">
           <div className="grid gap-3 px-3.5 py-3 sm:px-6 lg:grid-cols-4">

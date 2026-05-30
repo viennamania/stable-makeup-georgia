@@ -132,17 +132,20 @@ export default function RootLayout({
 
   const [showCenter, setShowCenter] = useState(false);
   const isPromotionPage = pathname?.endsWith("/promotion");
+  const isScanHomePage = /^\/[^/]+\/scan\/?$/.test(String(pathname || ""));
   const isScanPage = /^\/[^/]+\/scan(?:\/.*)?$/.test(String(pathname || ""));
   const isSuperadminBuyorderWatchPage = /^\/[^/]+\/superadmin\/buyorder-watch(?:\/.*)?$/.test(
     String(pathname || ""),
   );
+  const isRealtimePage =
+    pathname?.endsWith("/realtime-banktransfer") ||
+    pathname?.endsWith("/realtime-buyorder") ||
+    pathname?.endsWith("/realtime-settlement");
   const hideFixedChrome =
     isPromotionPage ||
     isScanPage ||
     isSuperadminBuyorderWatchPage ||
-    pathname?.endsWith("/realtime-banktransfer") ||
-    pathname?.endsWith("/realtime-buyorder") ||
-    pathname?.endsWith("/realtime-settlement");
+    isRealtimePage;
 
   const appShellClassName = isPromotionPage || isScanPage
     ? "w-full"
@@ -203,7 +206,7 @@ export default function RootLayout({
           <Toaster />
           <CenterStoreAdminFetchSignatureBridge />
           <GoogleTranslate />
-          {!isPromotionPage && <LanguageSelector />}
+          {!isPromotionPage && !isRealtimePage && !isScanHomePage && <LanguageSelector />}
 
           {/* chain image */}
 
