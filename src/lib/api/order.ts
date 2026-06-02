@@ -3082,6 +3082,11 @@ export async function insertBuyOrderForUser(data: any) {
 
   const mobile = '';
   const avatar = '';
+  const hasPublicIpField = Object.prototype.hasOwnProperty.call(data, 'publicIp');
+  const hasClientPublicIpField = Object.prototype.hasOwnProperty.call(data, 'clientPublicIp');
+  const hasRequestMetaField = Object.prototype.hasOwnProperty.call(data, 'requestMeta');
+  const orderPublicIp = data.publicIp ?? data.clientPublicIp ?? null;
+  const orderClientPublicIp = data.clientPublicIp ?? orderPublicIp;
  
   const result = await collection.insertOne(
 
@@ -3114,6 +3119,19 @@ export async function insertBuyOrderForUser(data: any) {
       seller: data.seller,
 
       tradeId: tradeId,
+      createdByApi: data.createdByApi || null,
+      createdByRequest: data.createdByRequest || null,
+      ...(hasPublicIpField || hasClientPublicIpField
+        ? {
+          publicIp: orderPublicIp,
+          clientPublicIp: orderClientPublicIp,
+        }
+        : {}),
+      ...(hasRequestMetaField
+        ? {
+          requestMeta: data.requestMeta ?? null,
+        }
+        : {}),
     }
   );
 

@@ -160,15 +160,27 @@ interface BuyOrder {
   userType: string;
   publicIp?: string | null;
   clientPublicIp?: string | null;
+  createdByRequest?: {
+    publicIp?: string | null;
+  } | null;
   requestMeta?: any;
 }
 
+const normalizePublicIp = (value: unknown) => {
+  const publicIp = String(value || "").trim();
+  if (!publicIp || publicIp.toLowerCase() === "unknown") {
+    return "";
+  }
+  return publicIp;
+};
+
 const getOrderPublicIp = (order: BuyOrder) => {
   return (
-    order?.publicIp ||
-    order?.clientPublicIp ||
-    order?.requestMeta?.publicIp ||
-    order?.requestMeta?.clientPublicIp ||
+    normalizePublicIp(order?.publicIp) ||
+    normalizePublicIp(order?.clientPublicIp) ||
+    normalizePublicIp(order?.createdByRequest?.publicIp) ||
+    normalizePublicIp(order?.requestMeta?.publicIp) ||
+    normalizePublicIp(order?.requestMeta?.clientPublicIp) ||
     ""
   );
 };
