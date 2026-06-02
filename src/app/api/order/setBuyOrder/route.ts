@@ -15,6 +15,7 @@ import {
   validateBuyOrderStoreAvailability,
   validateBuyOrderStorePaymentAmount,
 } from "@/lib/server/buy-order-store-validation";
+import { runBuyOrderAutomationAfterCreate } from "@/lib/server/buy-order-automation";
 
 const ROUTE = "/api/order/setBuyOrder";
 
@@ -386,6 +387,11 @@ export async function POST(request: NextRequest) {
       storecode: resolvedStorecode || null,
       nickname: nickname || null,
     },
+  });
+
+  await runBuyOrderAutomationAfterCreate({
+    orderId: result?._id?.toString?.() || result?._id,
+    source: ROUTE,
   });
 
 

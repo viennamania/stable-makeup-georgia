@@ -82,6 +82,10 @@ const normalizeBoolean = (value: unknown): boolean => {
   return false;
 };
 
+const isPayactionEnabled = () => normalizeBoolean(
+  process.env.BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_ENABLED,
+);
+
 const getCachedTaskResult = () => {
   const cached = globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskV2LastResult;
   if (!cached) {
@@ -241,6 +245,10 @@ const requestPayaction = async ({
   store: any;
   orderId: string;
 }) => {
+  if (!isPayactionEnabled()) {
+    return true;
+  }
+
   const payactionApiKey = normalizeString(store?.payactionKey?.payactionApiKey);
   const payactionShopId = normalizeString(store?.payactionKey?.payactionShopId);
 
