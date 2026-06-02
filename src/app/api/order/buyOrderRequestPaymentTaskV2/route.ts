@@ -3,11 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   getAllBuyOrdersForRequestPayment,
   buyOrderRequestPayment,
-  updateBuyOrderPayactionResult,
 } from "@lib/api/order";
 import {
   getStoreByStorecode,
 } from "@lib/api/store";
+import {
+  requestPayactionForBuyOrder,
+} from "@/lib/server/buy-order-payaction";
 
 export const runtime = "nodejs";
 export const preferredRegion = "icn1";
@@ -40,10 +42,6 @@ const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS = Math.max(
 const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS = Math.max(
   Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS || "", 10) || 5000,
   BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS,
-);
-const BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS = Math.max(
-  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS || "", 10) || 10000,
-  1000,
 );
 const BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_COUNT = Math.max(
   Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_COUNT || "", 10) || 2,
@@ -202,36 +200,6 @@ const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> =>
   throw lastError instanceof Error ? lastError : new Error("Unknown buyOrderRequestPaymentTaskV2 failure");
 };
 
-const fetchJsonWithTimeout = async (
-  url: string,
-  init: RequestInit,
-  timeoutMs: number,
-) => {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs));
-  try {
-    const response = await fetch(url, {
-      ...init,
-      signal: controller.signal,
-    });
-
-    let json: any = null;
-    try {
-      json = await response.json();
-    } catch {
-      json = null;
-    }
-
-    return {
-      ok: response.ok,
-      status: response.status,
-      json,
-    };
-  } finally {
-    clearTimeout(timer);
-  }
-};
-
 const requestPayaction = async ({
   buyOrder,
   store,
@@ -241,111 +209,12 @@ const requestPayaction = async ({
   store: any;
   orderId: string;
 }) => {
-  const payactionApiKey = normalizeString(store?.payactionKey?.payactionApiKey);
-  const payactionShopId = normalizeString(store?.payactionKey?.payactionShopId);
-
-  if (payactionApiKey && payactionShopId) {
-    const orderNumber = stringifyValue(buyOrder?.tradeId);
-    const orderAmount = Number(buyOrder?.krwAmount || 0);
-    const orderDate = new Date().toISOString();
-    const billingName = normalizeString(buyOrder?.buyer?.depositName);
-    const ordererName = billingName;
-
-    let mobile = normalizeString(buyOrder?.mobile);
-    if (mobile.startsWith("+82")) {
-      mobile = `0${mobile.substring(3)}`;
-    } else if (mobile.startsWith("82")) {
-      mobile = `0${mobile.substring(2)}`;
-    }
-
-    const payactionResponse = await fetchJsonWithTimeout(
-      "https://api.payaction.app/order",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": payactionApiKey,
-          "x-mall-id": payactionShopId,
-        },
-        body: JSON.stringify({
-          order_number: orderNumber,
-          order_amount: orderAmount,
-          order_date: orderDate,
-          billing_name: billingName,
-          orderer_name: ordererName,
-          orderer_phone_number: mobile,
-          orderer_email: buyOrder?.buyer?.email,
-          trade_usage: "지출증빙용",
-          identity_number: "",
-        }),
-      },
-      BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS,
-    );
-
-    if (payactionResponse.json && typeof payactionResponse.json === "object") {
-      await withTransientMongoRetry(() =>
-        updateBuyOrderPayactionResult({
-          orderId,
-          api: "/api/order/buyOrderRequestPaymentTaskV2",
-          payactionResult: payactionResponse.json,
-        }),
-      );
-    }
-
-    const payactionSuccess = Boolean(
-      payactionResponse.ok
-      && payactionResponse.status === 200
-      && payactionResponse.json
-      && payactionResponse.json.status === "success",
-    );
-
-    if (!payactionSuccess) {
-      console.error("Payaction API error", payactionResponse.status, payactionResponse.json);
-      return false;
-    }
-
-    return true;
-  }
-
-  const fallbackResponse = await fetchJsonWithTimeout(
-    "https://dash.bank-oc.com/api/order",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        order_number: stringifyValue(buyOrder?.tradeId),
-        order_amount: buyOrder?.krwAmount,
-        order_date: new Date().toISOString(),
-        billing_name: buyOrder?.buyer?.depositName,
-        orderer_name: buyOrder?.buyer?.depositName,
-        orderer_phone_number: buyOrder?.mobile,
-        orderer_email: buyOrder?.email || "abc@gmail.com",
-        trade_usage: "지출증빙용",
-        identity_number: buyOrder?.mobile,
-        auto_confirm: 0,
-      }),
-    },
-    BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS,
-  );
-
-  if (fallbackResponse.json && typeof fallbackResponse.json === "object") {
-    await withTransientMongoRetry(() =>
-      updateBuyOrderPayactionResult({
-        orderId,
-        api: "/api/order/buyOrderRequestPayment",
-        payactionResult: fallbackResponse.json,
-      }),
-    );
-  }
-
-  if (!fallbackResponse.ok || fallbackResponse.json?.status !== "success") {
-    console.error("Fallback Payaction API warning", fallbackResponse.status, fallbackResponse.json);
-  }
-
-  // Preserve legacy behavior: fallback branch still continues buyOrderRequestPayment.
-  return true;
+  return requestPayactionForBuyOrder({
+    buyOrder,
+    store,
+    orderId,
+    api: "/api/order/buyOrderRequestPaymentTaskV2",
+  });
 };
 
 const runTask = async () => {

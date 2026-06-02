@@ -38,6 +38,7 @@ import {
   validateBuyOrderStorePaymentAmount,
 } from "@/lib/server/buy-order-store-validation";
 import { buildUserCreationAudit } from "@/lib/server/user-creation-security";
+import { runBuyOrderAutomationAfterCreate } from "@/lib/server/buy-order-automation";
 import clientPromise, { dbName } from "@/lib/mongodb";
 
 
@@ -572,6 +573,11 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
       clientId: String(clientid || "").trim() || null,
       autoRegisteredUser,
     },
+  });
+
+  await runBuyOrderAutomationAfterCreate({
+    orderId: result?._id?.toString?.() || result?._id,
+    source: ROUTE,
   });
 
 

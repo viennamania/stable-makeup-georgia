@@ -10,6 +10,7 @@ import {
   getPrivateSellerWalletAddressFromStorecode,
 } from '@lib/api/store';
 import { validateBuyOrderStorePaymentAmount } from "@/lib/server/buy-order-store-validation";
+import { runBuyOrderAutomationAfterCreate } from "@/lib/server/buy-order-automation";
 
 
 export async function POST(request: NextRequest) {
@@ -114,6 +115,10 @@ export async function POST(request: NextRequest) {
 
   }
 
+  await runBuyOrderAutomationAfterCreate({
+    orderId: result?._id?.toString?.() || result?._id,
+    source: "/api/order/setBuyOrderForUser",
+  });
 
 
 
