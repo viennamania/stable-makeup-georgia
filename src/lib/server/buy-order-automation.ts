@@ -8,6 +8,7 @@ import {
 import { getStoreByStorecode } from "@lib/api/store";
 import { getOneByWalletAddress } from "@lib/api/user";
 import clientPromise, { dbName } from "@/lib/mongodb";
+import { requestPayactionForBuyOrder } from "@/lib/server/buy-order-payaction";
 
 type AutomationStepResult = {
   status: "accepted" | "requested" | "skipped" | "cancelled" | "failed";
@@ -200,7 +201,8 @@ export async function autoAcceptBuyOrderById(orderId: unknown): Promise<Automati
 }
 
 export async function autoRequestPaymentById(orderId: unknown): Promise<AutomationStepResult> {
-  const buyOrder = await getBuyOrderById(orderId);
+  const normalizedOrderId = normalizeString(orderId);
+  const buyOrder = await getBuyOrderById(normalizedOrderId);
   const tradeId = normalizeString(buyOrder?.tradeId);
 
   if (!buyOrder) {
@@ -247,6 +249,23 @@ export async function autoRequestPaymentById(orderId: unknown): Promise<Automati
 
   const transactionHash = "0x";
   const isPrivateSale = normalizeBoolean(buyOrder?.privateSale);
+  if (!isPrivateSale) {
+    const payactionReady = await requestPayactionForBuyOrder({
+      buyOrder,
+      store,
+      orderId: normalizedOrderId,
+      api: "buy-order-inline-automation",
+    });
+
+    if (!payactionReady) {
+      return {
+        status: "skipped",
+        reason: "payaction_request_failed",
+        tradeId,
+      };
+    }
+  }
+
   const result = await buyOrderRequestPayment(
     isPrivateSale
       ? {

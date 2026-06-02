@@ -10539,12 +10539,25 @@ export async function getAllBuyOrdersForRequestPayment(
   const safeLimit = Math.min(Math.max(1, Number(limit) || 1), 200);
   const safePage = Math.max(1, Number(page) || 1);
 
-  const query = {
-    "payactionResult.status": { $ne: 'error' }, // ==================> 중요한부분
+  const query: any = {
     storecode: { $ne: null },
     "buyer.depositName": { $ne: null },
-    status: 'accepted',
     ...(acceptedBefore ? { acceptedAt: { $lte: acceptedBefore } } : {}),
+    $or: [
+      {
+        "payactionResult.status": { $ne: 'error' }, // ==================> 중요한부분
+        status: 'accepted',
+      },
+      {
+        status: 'paymentRequested',
+        privateSale: { $ne: true },
+        $or: [
+          { payactionResult: { $exists: false } },
+          { payactionResult: null },
+          { "payactionResult.status": { $nin: ['success', 'error'] } },
+        ],
+      },
+    ],
   };
 
   const [results, totalCount] = await Promise.all([
