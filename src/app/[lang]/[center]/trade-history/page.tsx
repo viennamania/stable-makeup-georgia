@@ -158,7 +158,32 @@ interface BuyOrder {
   agent: any;
 
   userType: string;
+  publicIp?: string | null;
+  clientPublicIp?: string | null;
+  createdByRequest?: {
+    publicIp?: string | null;
+  } | null;
+  requestMeta?: any;
 }
+
+const normalizePublicIp = (value: unknown) => {
+  const publicIp = String(value || "").trim();
+  if (!publicIp || publicIp.toLowerCase() === "unknown") {
+    return "";
+  }
+  return publicIp;
+};
+
+const getOrderPublicIp = (order: BuyOrder) => {
+  return (
+    normalizePublicIp(order?.publicIp) ||
+    normalizePublicIp(order?.clientPublicIp) ||
+    normalizePublicIp(order?.createdByRequest?.publicIp) ||
+    normalizePublicIp(order?.requestMeta?.publicIp) ||
+    normalizePublicIp(order?.requestMeta?.clientPublicIp) ||
+    ""
+  );
+};
 
 
 /*
@@ -811,6 +836,8 @@ export default function Index({ params }: any) {
   const [searchBuyer, setSearchBuyer] = useState("");
 
   const [searchDepositName, setSearchDepositName] = useState("");
+
+  const [searchTradeId, setSearchTradeId] = useState("");
 
 
   // search store bank account number
@@ -2179,6 +2206,7 @@ export default function Index({ params }: any) {
 
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
+              searchTradeId: searchTradeId,
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
 
               userType: userType,
@@ -2265,6 +2293,7 @@ export default function Index({ params }: any) {
 
     searchBuyer,
     searchDepositName,
+    searchTradeId,
     searchStoreBankAccountNumber,
 
     userType,
@@ -2302,6 +2331,7 @@ const fetchBuyOrders = async () => {
 
         searchBuyer: searchBuyer,
         searchDepositName: searchDepositName,
+        searchTradeId: searchTradeId,
 
         searchStoreBankAccountNumber: searchStoreBankAccountNumber,
 
@@ -3406,6 +3436,16 @@ const fetchBuyOrders = async () => {
                   <div className="flex flex-row items-center gap-2">
                     <input
                       type="text"
+                      value={searchTradeId}
+                      onChange={(e) => setSearchTradeId(e.target.value)}
+                      placeholder="거래번호"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
+                  </div>
+
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
                       value={searchBuyer}
                       onChange={(e) => setSearchBuyer(e.target.value)}
                       placeholder="회원 아이디"
@@ -4035,6 +4075,19 @@ const fetchBuyOrders = async () => {
                               >
                                 #{item?.tradeId}
                               </button>
+
+                              {getOrderPublicIp(item) && (
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(getOrderPublicIp(item));
+                                    toast.success('퍼블릭IP가 복사되었습니다.');
+                                  }}
+                                  className="max-w-full break-all text-left text-xs text-zinc-500 font-semibold hover:text-blue-600 cursor-pointer hover:underline"
+                                  title="퍼블릭IP 복사"
+                                >
+                                  퍼블릭IP {getOrderPublicIp(item)}
+                                </button>
+                              )}
 
                             </div>
                           </td>
@@ -4929,6 +4982,19 @@ const fetchBuyOrders = async () => {
                               p-4 rounded-md border bg-black bg-opacity-50
                           `}
                         >
+
+                          {getOrderPublicIp(item) && (
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(getOrderPublicIp(item));
+                                toast.success('퍼블릭IP가 복사되었습니다.');
+                              }}
+                              className="mb-3 max-w-full break-all text-left text-xs text-zinc-400 font-semibold hover:text-blue-400 hover:underline"
+                              title="퍼블릭IP 복사"
+                            >
+                              퍼블릭IP {getOrderPublicIp(item)}
+                            </button>
+                          )}
 
                           {item.status === 'ordered' && (
 

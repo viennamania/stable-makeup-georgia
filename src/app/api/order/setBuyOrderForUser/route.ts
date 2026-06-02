@@ -11,11 +11,18 @@ import {
 } from '@lib/api/store';
 import { validateBuyOrderStorePaymentAmount } from "@/lib/server/buy-order-store-validation";
 import { runBuyOrderAutomationAfterCreate } from "@/lib/server/buy-order-automation";
+import {
+  getRequestCountry,
+  getRequestIp,
+} from "@/lib/server/user-read-security";
 
+const ROUTE = "/api/order/setBuyOrderForUser";
 
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
+  const publicIp = getRequestIp(request);
+  const publicCountry = getRequestCountry(request);
 
   const {
     storecode,
@@ -99,6 +106,25 @@ export async function POST(request: NextRequest) {
     privateSale: privateSale,
     buyer: buyer,
     seller: sellerInfo,
+    createdByApi: ROUTE,
+    createdByRequest: {
+      route: ROUTE,
+      method: request.method,
+      publicIp,
+      publicCountry,
+      requestedAt: new Date().toISOString(),
+    },
+    publicIp,
+    clientPublicIp: publicIp,
+    requestMeta: {
+      source: "headers",
+      route: ROUTE,
+      method: request.method,
+      publicIp,
+      clientPublicIp: publicIp,
+      publicCountry,
+      userAgent: request.headers.get("user-agent") || null,
+    },
   });
 
 
@@ -117,7 +143,7 @@ export async function POST(request: NextRequest) {
 
   await runBuyOrderAutomationAfterCreate({
     orderId: result?._id?.toString?.() || result?._id,
-    source: "/api/order/setBuyOrderForUser",
+    source: ROUTE,
   });
 
 

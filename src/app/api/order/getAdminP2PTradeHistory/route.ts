@@ -160,6 +160,7 @@ const sanitizeOrderForPublic = (order: unknown) => {
     ...input,
     publicIp: null,
     clientPublicIp: null,
+    createdByRequest: null,
     requestMeta: null,
     nickname: maskName(input.nickname),
     walletAddress: maskWalletLikeValue(input.walletAddress),
