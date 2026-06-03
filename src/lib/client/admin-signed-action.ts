@@ -1,5 +1,6 @@
 "use client";
 
+import { isAdminPasswordSessionAccount } from "@/lib/client/use-admin-active-account";
 import type { Account } from "thirdweb/wallets";
 
 const normalizeString = (value: unknown): string => {
@@ -154,6 +155,17 @@ export const postAdminSignedJson = async ({
 }) => {
   try {
     const actionFields = sanitizeActionFields(body || {});
+    if (!account || isAdminPasswordSessionAccount(account)) {
+      return fetch(route, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(actionFields),
+      });
+    }
+
     const signed = await signAdminActionPayload({
       account,
       route,

@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState } from "react";
 import Image from "next/image";
 
 import { toast } from "react-hot-toast";
@@ -9,7 +15,6 @@ import { client } from "../../../client";
 
 import {
   ConnectButton,
-  useActiveAccount,
 } from "thirdweb/react";
 
 import {
@@ -385,7 +390,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId, onE
 };
 
 export default function BankDepositedPage() {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const address = activeAccount?.address;
 
   const [logs, setLogs] = useState<WebhookLog[]>([]);

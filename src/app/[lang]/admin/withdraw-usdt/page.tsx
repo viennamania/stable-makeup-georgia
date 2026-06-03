@@ -1,8 +1,14 @@
 'use client';
 
-import { useEffect, useState } from "react";
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useState } from "react";
 import { toast } from "react-hot-toast";
-import { ConnectButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { ConnectButton,
+  useActiveWallet,
+} from "thirdweb/react";
 import { inAppWallet } from "thirdweb/wallets";
 import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
 
@@ -43,7 +49,7 @@ const isAdminUser = (user: any) => {
 };
 
 export default function AdminWithdrawUsdtPage({ params }: any) {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const activeWallet = useActiveWallet();
   const address = activeAccount?.address || "";
   const [loadingUser, setLoadingUser] = useState(false);

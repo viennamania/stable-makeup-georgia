@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useMemo,
+  useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { useActiveAccount } from "thirdweb/react";
 
 import { postAdminMemberPrivateKeyWalletCollectSigned } from "@/lib/client/collect-admin-member-privatekey-wallet-balances-signed";
 import { postAdminMemberPrivateKeyWalletBalancesSigned } from "@/lib/client/get-admin-member-privatekey-wallet-balances-signed";
@@ -75,7 +79,7 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
   params: { lang: string };
 }) {
   const router = useRouter();
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const walletAddress = activeAccount?.address || "";
 
   const [loading, setLoading] = useState(false);

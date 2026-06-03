@@ -1,30 +1,24 @@
-// send USDT
 'use client';
+// send USDT
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
 
 
 import React, { use, useEffect, useState } from 'react';
 
 import AdminAccessState from "@/components/admin/admin-access-state";
-import { toast } from 'react-hot-toast';
+import {
+  toast } from 'react-hot-toast';
 import { client } from '../../../client';
 
 import {
     //ThirdwebProvider,
-    ConnectButton,
-  
-    useConnect,
-  
-    useReadContract,
-  
-    useActiveWallet,
-
-    useActiveAccount,
-    useSendBatchTransaction,
-
-    useConnectedWallets,
-
-    useSetActiveWallet,
-    
+  ConnectButton,
+  useConnect,
+  useReadContract,
+  useActiveWallet,
+  useSendBatchTransaction,
+  useConnectedWallets,
+  useSetActiveWallet,
 } from "thirdweb/react";
 
 
@@ -262,7 +256,7 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
 
   const address = activeAccount?.address;
 

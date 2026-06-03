@@ -4,9 +4,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThirdwebProvider } from "thirdweb/react";
 
-import { Toaster } from "react-hot-toast";
+import {
+  Toaster } from "react-hot-toast";
 
-import { useState, useEffect } from "react";
+import { useState,
+  useEffect } from "react";
 
 
 import Script from "next/script";
@@ -32,13 +34,15 @@ import StabilityConsole from '@/components/StabilityConsole';
 import CenterConsole from '@/components/CenterConsole';
 
 import StoreConsole from '@/components/StoreConsole';
+import AdminPasswordSessionStatus from "@/components/admin/admin-password-session-status";
 import CenterStoreAdminFetchSignatureBridge from "@/components/CenterStoreAdminFetchSignatureBridge";
+import { AdminPasswordSessionProvider } from "@/lib/client/use-admin-active-account";
 
 
 import {
   clientId,
   client,
-} from "../../client";
+  } from "../../client";
 
 
 
@@ -47,7 +51,7 @@ import {
   polygon,
   arbitrum,
   bsc,
-} from "thirdweb/chains";
+  } from "thirdweb/chains";
 
 
 import {
@@ -56,14 +60,12 @@ import {
   polygonContractAddressUSDT,
   arbitrumContractAddressUSDT,
   bscContractAddressUSDT,
-
   bscContractAddressMKRW,
-} from "@/app/config/contractAddresses";
+  } from "@/app/config/contractAddresses";
 
 
 import {
   ConnectButton,
-  useActiveAccount,
   AutoConnect,
 } from "thirdweb/react";
 
@@ -108,12 +110,6 @@ export default function RootLayout({
 }>) {
 
   const router = useRouter();
-
-  const activeAccount = useActiveAccount();
-
-  const address = activeAccount?.address;
-
-  console.log("address", address);
 
 
   /*
@@ -167,11 +163,13 @@ export default function RootLayout({
 
   return (
 
+    <AdminPasswordSessionProvider>
     <div className="w-full flex flex-col items-center justify-center bg-gray-100 rounded-lg shadow-md mb-4
       pt-48 xl:pt-24
     ">
 
       <CenterStoreAdminFetchSignatureBridge />
+      <AdminPasswordSessionStatus />
 
       {/*
       <AutoConnect
@@ -243,6 +241,7 @@ export default function RootLayout({
       {children}
 
     </div>
+    </AdminPasswordSessionProvider>
 
   );
 

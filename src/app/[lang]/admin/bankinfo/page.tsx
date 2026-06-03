@@ -1,6 +1,10 @@
 'use client';
 
-import { useEffect, useState } from "react";
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useState } from "react";
 
 import Image from "next/image";
 
@@ -11,7 +15,6 @@ import { client } from "../../../client";
 
 import {
   ConnectButton,
-  useActiveAccount,
 } from "thirdweb/react";
 
 import {
@@ -140,7 +143,7 @@ const bankNameOptions = [
 
 
 export default function BankInfoPage() {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const address = activeAccount?.address;
 
   const [bankInfos, setBankInfos] = useState([] as any[]);

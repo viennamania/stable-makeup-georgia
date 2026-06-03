@@ -14,6 +14,8 @@
 		"build:clean": "pnpm run clean:next && pnpm run build",
 		"start": "pnpm run check:node && next start",
 		"lint": "next lint",
+		"admin-auth:create-account": "node scripts/create-admin-password-account.mjs",
+		"admin-auth:login": "node scripts/admin-password-login.mjs",
 		"backfill:banktransfers:webhooklogs": "node scripts/backfill-banktransfers-from-webhooklogs.js",
 		"transfer:seller-usdt:dry-run": "node scripts/transfer-seller-usdt-to-wallet.mjs",
 		"transfer:seller-usdt:execute": "node scripts/transfer-seller-usdt-to-wallet.mjs --execute"

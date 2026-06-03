@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo, use, act } from "react";
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  use,
+  act } from "react";
 
 import Image from "next/image";
 import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
@@ -27,21 +34,16 @@ import {
   sendAndConfirmTransaction,
   sendTransaction,
   waitForReceipt,
-} from "thirdweb";
+  } from "thirdweb";
 
 
 
 import {
   ConnectButton,
-  useActiveAccount,
   useActiveWallet,
   useWalletBalance,
-
   useSetActiveWallet,
-
   useConnectedWallets,
-
-
 } from "thirdweb/react";
 
 import {
@@ -538,7 +540,7 @@ export default function Index({ params }: any) {
   */
 
 
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
 
   const address = activeAccount?.address;
 

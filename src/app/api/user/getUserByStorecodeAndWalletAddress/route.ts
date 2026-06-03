@@ -6,6 +6,11 @@ import {
   getOneByWalletAddress,
 } from "@lib/api/user";
 import {
+  getAdminPasswordCenterStoreAccess,
+  isAdminPasswordCookieSessionRequestAllowed,
+  readAdminPasswordSession,
+} from "@/lib/server/admin-password-auth";
+import {
   buildAdminReadSigningMessage,
   consumeReadRateLimit,
   getRequestIp,
@@ -43,7 +48,138 @@ export async function POST(request: NextRequest) {
   const signedAtIso = parseSignedAtOrNull(body.signedAt);
   const ip = getRequestIp(request);
 
-  if (!targetStorecode || !targetWalletAddress || !requesterStorecode || !requesterWalletAddress) {
+  if (!targetStorecode || !targetWalletAddress) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: "Missing required fields",
+      },
+      { status: 400 }
+    );
+  }
+
+  const passwordSession = await readAdminPasswordSession(request).catch(() => null);
+  if (passwordSession?.authenticated) {
+    const passwordRequesterWalletAddress = passwordSession.requesterWalletAddress;
+    const passwordRate = consumeReadRateLimit({
+      scope: "getUserByStorecodeAndWalletAddress:admin-password-session",
+      ip,
+      walletAddress: passwordRequesterWalletAddress,
+    });
+
+    if (!passwordRate.allowed) {
+      void logUserReadSecurityEvent({
+        route: "/api/user/getUserByStorecodeAndWalletAddress",
+        status: "blocked",
+        reason: "password_session_rate_limited",
+        ip,
+        storecode: targetStorecode,
+        walletAddress: targetWalletAddress,
+        requesterWalletAddress: passwordRequesterWalletAddress,
+        signatureProvided: false,
+        signatureVerified: false,
+        rateLimited: true,
+        extra: {
+          requesterStorecode: passwordSession.requesterStorecode,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Too many requests",
+        },
+        { status: 429 }
+      );
+    }
+
+    if (!isAdminPasswordCookieSessionRequestAllowed(request, passwordSession.source)) {
+      void logUserReadSecurityEvent({
+        route: "/api/user/getUserByStorecodeAndWalletAddress",
+        status: "blocked",
+        reason: "password_session_invalid_origin",
+        ip,
+        storecode: targetStorecode,
+        walletAddress: targetWalletAddress,
+        requesterWalletAddress: passwordRequesterWalletAddress,
+        signatureProvided: false,
+        signatureVerified: false,
+        rateLimited: false,
+        extra: {
+          requesterStorecode: passwordSession.requesterStorecode,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Invalid session origin",
+        },
+        { status: 403 }
+      );
+    }
+
+    const centerAccess = getAdminPasswordCenterStoreAccess({
+      account: passwordSession.account,
+      storecode: targetStorecode,
+    });
+
+    if (!centerAccess.ok) {
+      void logUserReadSecurityEvent({
+        route: "/api/user/getUserByStorecodeAndWalletAddress",
+        status: "blocked",
+        reason: `password_session_${centerAccess.reason}`,
+        ip,
+        storecode: targetStorecode,
+        walletAddress: targetWalletAddress,
+        requesterWalletAddress: passwordRequesterWalletAddress,
+        signatureProvided: false,
+        signatureVerified: false,
+        rateLimited: false,
+        extra: {
+          requesterStorecode: passwordSession.requesterStorecode,
+          requesterRole: passwordSession.account.role,
+          allowedStorecodes: passwordSession.account.storecodes,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Forbidden",
+        },
+        { status: 403 }
+      );
+    }
+
+    const result = await getOneByStorecodeAndWalletAddress(targetStorecode, targetWalletAddress);
+    const sanitizedResult = sanitizeUserForResponse(result);
+
+    void logUserReadSecurityEvent({
+      route: "/api/user/getUserByStorecodeAndWalletAddress",
+      status: "allowed",
+      reason: "admin_password_session",
+      ip,
+      storecode: targetStorecode,
+      walletAddress: targetWalletAddress,
+      requesterWalletAddress: passwordRequesterWalletAddress,
+      signatureProvided: false,
+      signatureVerified: false,
+      rateLimited: false,
+      extra: {
+        found: Boolean(result),
+        requesterStorecode: passwordSession.requesterStorecode,
+        requesterRole: passwordSession.account.role,
+        matchedBy: centerAccess.matchedBy,
+      },
+    });
+
+    return NextResponse.json({
+      result: sanitizedResult,
+    });
+  }
+
+  if (!requesterStorecode || !requesterWalletAddress) {
     return NextResponse.json(
       {
         result: null,

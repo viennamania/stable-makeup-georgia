@@ -1,5 +1,6 @@
 "use client";
 
+import { isAdminPasswordSessionAccount } from "@/lib/client/use-admin-active-account";
 import type { Account } from "thirdweb/wallets";
 
 const ADMIN_READ_SIGNING_PREFIX = "stable-georgia:get-user:admin:v1";
@@ -54,7 +55,6 @@ export async function postGetUserByStorecodeAndWalletAddressSigned({
   targetWalletAddress,
 }: GetUserByStorecodeAndWalletAddressSignedParams): Promise<any> {
   const adminStorecode = normalize(requesterStorecode) || "admin";
-  const adminWalletAddress = normalizeWalletAddress(requesterWalletAddress);
   const safeTargetStorecode = normalize(targetStorecode);
   const safeTargetWalletAddress = normalizeWalletAddress(targetWalletAddress);
 
@@ -65,11 +65,51 @@ export async function postGetUserByStorecodeAndWalletAddressSigned({
     };
   }
 
+  const adminWalletAddress =
+    normalizeWalletAddress(requesterWalletAddress)
+    || (isAdminPasswordSessionAccount(account)
+      ? normalizeWalletAddress(account.adminPasswordSession.requesterWalletAddress) || normalizeWalletAddress(account.address)
+      : normalizeWalletAddress(account.address));
+
   if (!adminStorecode || !adminWalletAddress || !safeTargetStorecode || !safeTargetWalletAddress) {
     return {
       result: null,
       error: "Missing required fields",
     };
+  }
+
+  if (isAdminPasswordSessionAccount(account)) {
+    try {
+      const response = await fetch("/api/user/getUserByStorecodeAndWalletAddress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          storecode: safeTargetStorecode,
+          walletAddress: safeTargetWalletAddress,
+          requesterStorecode: adminStorecode,
+          requesterWalletAddress: adminWalletAddress,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok && !data?.error) {
+        return {
+          ...data,
+          result: data?.result ?? null,
+          error: `Request failed (${response.status})`,
+        };
+      }
+
+      return data;
+    } catch (error) {
+      return {
+        result: null,
+        error: error instanceof Error ? error.message : "Failed to read user with admin session",
+      };
+    }
   }
 
   const signedAt = new Date().toISOString();

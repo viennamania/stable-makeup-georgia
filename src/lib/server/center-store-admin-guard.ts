@@ -5,6 +5,11 @@ import clientPromise, { dbName } from "@/lib/mongodb";
 import { getStoreByStorecode } from "@lib/api/store";
 import { getOneAdminWalletUserByWalletAddress, getOneByWalletAddress } from "@lib/api/user";
 import {
+  getAdminPasswordCenterStoreAccess,
+  isAdminPasswordCookieSessionRequestAllowed,
+  readAdminPasswordSession,
+} from "@/lib/server/admin-password-auth";
+import {
   buildCenterStoreAdminSigningMessage,
   extractCenterStoreAdminActionFields,
   isPlainObject,
@@ -31,7 +36,7 @@ type VerifyCenterStoreAdminGuardResult =
       ok: true;
       requesterWalletAddress: string;
       requesterIsAdmin: boolean;
-      matchedBy: "store_admin_wallet" | "global_admin";
+      matchedBy: "store_admin_wallet" | "global_admin" | "store_admin_password";
     }
   | {
       ok: false;
@@ -442,6 +447,88 @@ export const verifyCenterStoreAdminGuard = async ({
         ok: false,
         status: 400,
         error: "storecode is required",
+      };
+    }
+
+    const passwordSession = await readAdminPasswordSession(request).catch(() => null);
+    if (passwordSession?.authenticated) {
+      const passwordSessionRate = consumeReadRateLimit({
+        scope: `center-store-admin-password-session:${route}`,
+        ip,
+        walletAddress: passwordSession.requesterWalletAddress,
+      });
+
+      if (!passwordSessionRate.allowed) {
+        void writeAdminApiCallLog({
+          status: "blocked",
+          reason: "password_session_rate_limited",
+          requesterUser: passwordSession.requesterUser,
+          walletAddress: passwordSession.requesterWalletAddress,
+        });
+        return {
+          ok: false,
+          status: 429,
+          error: "Too many requests",
+        };
+      }
+
+      if (!isAdminPasswordCookieSessionRequestAllowed(request, passwordSession.source)) {
+        void writeAdminApiCallLog({
+          status: "blocked",
+          reason: "password_session_invalid_origin",
+          requesterUser: passwordSession.requesterUser,
+          walletAddress: passwordSession.requesterWalletAddress,
+        });
+        return {
+          ok: false,
+          status: 403,
+          error: "Invalid session origin",
+        };
+      }
+
+      const centerAccess = getAdminPasswordCenterStoreAccess({
+        account: passwordSession.account,
+        storecode,
+      });
+
+      if (!centerAccess.ok) {
+        void writeAdminApiCallLog({
+          status: "blocked",
+          reason: `password_session_${centerAccess.reason}`,
+          requesterUser: passwordSession.requesterUser,
+          walletAddress: passwordSession.requesterWalletAddress,
+          meta: {
+            requesterRole: passwordSession.account.role,
+            allowedStorecodes: passwordSession.account.storecodes,
+            sessionSource: passwordSession.source,
+          },
+        });
+        return {
+          ok: false,
+          status: 403,
+          error: "Forbidden",
+        };
+      }
+
+      void writeAdminApiCallLog({
+        status: "allowed",
+        reason: centerAccess.matchedBy === "global_admin"
+          ? "global_admin_password_session"
+          : "store_admin_password_session",
+        requesterUser: passwordSession.requesterUser,
+        walletAddress: passwordSession.requesterWalletAddress,
+        meta: {
+          matchedBy: centerAccess.matchedBy,
+          requesterRole: passwordSession.account.role,
+          allowedStorecodes: passwordSession.account.storecodes,
+          sessionSource: passwordSession.source,
+        },
+      });
+      return {
+        ok: true,
+        requesterWalletAddress: passwordSession.requesterWalletAddress,
+        requesterIsAdmin: centerAccess.requesterIsAdmin,
+        matchedBy: centerAccess.matchedBy,
       };
     }
 

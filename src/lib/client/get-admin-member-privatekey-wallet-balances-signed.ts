@@ -1,5 +1,6 @@
 "use client";
 
+import { isAdminPasswordSessionAccount } from "@/lib/client/use-admin-active-account";
 import type { Account } from "thirdweb/wallets";
 
 const ROUTE = "/api/admin/member/getPrivateKeyWalletBalances";
@@ -69,6 +70,37 @@ export async function postAdminMemberPrivateKeyWalletBalancesSigned({
       result: null,
       error: "requesterWalletAddress is required",
     };
+  }
+
+  if (isAdminPasswordSessionAccount(account)) {
+    try {
+      const response = await fetch(ROUTE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          requesterStorecode: normalizedStorecode,
+          requesterWalletAddress: normalizedWalletAddress,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok && !data?.error) {
+        return {
+          ...data,
+          result: data?.result ?? null,
+          error: `Request failed (${response.status})`,
+        };
+      }
+      return data;
+    } catch (error) {
+      return {
+        result: null,
+        error: error instanceof Error ? error.message : "Failed to request balances with admin session",
+      };
+    }
   }
 
   const signedAt = new Date().toISOString();

@@ -1,6 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useMemo,
+  useState } from "react";
 
 import Image from "next/image";
 
@@ -13,7 +18,6 @@ import { client } from "../../../client";
 
 import {
   ConnectButton,
-  useActiveAccount,
 } from "thirdweb/react";
 
 import {
@@ -91,7 +95,7 @@ export default function BankTransferPage({ params }: any) {
   const router = useRouter();
   const searchParams = useSearchParams()!;
 
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const address = activeAccount?.address;
 
   const todayString = getTodayString();

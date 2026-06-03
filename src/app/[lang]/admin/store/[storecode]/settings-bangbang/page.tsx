@@ -1,32 +1,32 @@
-// nickname settings
 'use client';
+// nickname settings
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
 import React, { use, useEffect, useState } from 'react';
 
 
 
-import { toast } from 'react-hot-toast';
+import {
+  toast } from 'react-hot-toast';
 
 import { client } from "../../../../../client";
 
 import {
     getContract,
-    sendAndConfirmTransaction,
-} from "thirdweb";
+  sendAndConfirmTransaction,
+  } from "thirdweb";
 
 
 
 import {
     polygon,
-    arbitrum,
-} from "thirdweb/chains";
+  arbitrum,
+  } from "thirdweb/chains";
 
 import {
     ConnectButton,
-    useActiveAccount,
-    useActiveWallet,
-
-    useConnectedWallets,
-    useSetActiveWallet,
+  useActiveWallet,
+  useConnectedWallets,
+  useSetActiveWallet,
 } from "thirdweb/react";
 
 
@@ -283,7 +283,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-    const smartAccount = useActiveAccount();
+    const smartAccount = useAdminActiveAccount();
 
     const address = smartAccount?.address;
 

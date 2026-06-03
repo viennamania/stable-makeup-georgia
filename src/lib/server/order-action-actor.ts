@@ -23,7 +23,7 @@ export type CenterStoreOrderActionActor = {
   role?: string | null;
   publicIp?: string | null;
   signedAt?: string | null;
-  matchedBy?: "store_admin_wallet" | "global_admin" | null;
+  matchedBy?: "store_admin_wallet" | "global_admin" | "store_admin_password" | null;
 };
 
 export async function resolveCenterStoreOrderActionActor({
@@ -37,7 +37,7 @@ export async function resolveCenterStoreOrderActionActor({
   request: NextRequest;
   requesterWalletAddress: string;
   requesterIsAdmin: boolean;
-  matchedBy: "store_admin_wallet" | "global_admin";
+  matchedBy: "store_admin_wallet" | "global_admin" | "store_admin_password";
   storecode: string;
   signedAt?: unknown;
 }): Promise<CenterStoreOrderActionActor> {
@@ -46,11 +46,14 @@ export async function resolveCenterStoreOrderActionActor({
   const normalizedSignedAt = normalizeString(signedAt);
 
   if (!normalizedWalletAddress) {
+    const passwordLoginId = requesterWalletAddress.startsWith("password:")
+      ? requesterWalletAddress.slice("password:".length)
+      : "";
     return {
       walletAddress: null,
-      nickname: null,
+      nickname: passwordLoginId || null,
       storecode: requesterIsAdmin ? "admin" : normalizedStorecode || null,
-      role: "admin",
+      role: requesterIsAdmin ? "admin" : "store_admin",
       publicIp: getRequestIp(request) || null,
       signedAt: normalizedSignedAt || null,
       matchedBy,
