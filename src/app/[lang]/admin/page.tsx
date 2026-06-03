@@ -1045,6 +1045,27 @@ export default function Index({ params }: any) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    router.push('/' + params.lang + '/admin/admin-management');
+                  }}
+                  className="flex items-center justify-center gap-2 bg-[#1f2937] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#111827]/80"
+                >
+                  <Image
+                    src="/icon-admin.png"
+                    alt="Admin Management"
+                    width={20}
+                    height={20}
+                    className="rounded-lg w-5 h-5"
+                  />
+                  <span className="text-sm text-[#f3f4f6]">
+                    관리자 관리
+                  </span>
+                </button>
+              )}
+
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     router.push('/' + params.lang + '/admin/client-settings');
                   }}
                 >
