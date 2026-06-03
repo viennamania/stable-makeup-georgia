@@ -1,10 +1,15 @@
 'use client';
 
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 
 
 
-import { useState, useEffect, use } from "react";
+import {
+  useState,
+  useEffect,
+  use } from "react";
 
 
 
@@ -14,20 +19,19 @@ import { client } from "../../../../client";
 
 import {
     getContract,
-    sendAndConfirmTransaction,
-} from "thirdweb";
+  sendAndConfirmTransaction,
+  } from "thirdweb";
 
 
 
 import {
     polygon,
-    arbitrum,
-} from "thirdweb/chains";
+  arbitrum,
+  } from "thirdweb/chains";
 
 import {
     ConnectButton,
-    useActiveAccount,
-    useActiveWallet,
+  useActiveWallet,
 } from "thirdweb/react";
 import { inAppWallet } from "thirdweb/wallets";
 
@@ -603,7 +607,7 @@ export default function Index({ params }: any) {
 
 
 
-  const smartAccount = useActiveAccount();
+  const smartAccount = useAdminActiveAccount();
 
 
   //const address = smartAccount?.address || "";

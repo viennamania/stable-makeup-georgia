@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent } from "react";
 
 import Image from "next/image";
 
@@ -12,7 +18,6 @@ import { client } from "../../../../../client";
 
 import {
   ConnectButton,
-  useActiveAccount,
 } from "thirdweb/react";
 import { useRouter } from "next/navigation";
 
@@ -146,7 +151,7 @@ const buildFormsFromStore = (store: any) => ({
 
 export default function PaymentSettingsPage({ params }: any) {
   const router = useRouter();
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const address = activeAccount?.address;
   const storecode = params?.storecode;
 

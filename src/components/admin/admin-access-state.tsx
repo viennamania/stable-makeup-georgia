@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -90,6 +91,17 @@ export default function AdminAccessState({
   const pathname = usePathname();
   const meta = getVariantMeta(variant);
   const normalizedPath = pathname || "/admin";
+  const pathParts = normalizedPath.split("/").filter(Boolean);
+  const lang = pathParts[0] || "ko";
+  const passwordLoginHref = `/${lang}/admin/login?next=${encodeURIComponent(normalizedPath)}`;
+  const resolvedActions = actions ?? (variant === "login" ? (
+    <Link
+      href={passwordLoginHref}
+      className="inline-flex items-center justify-center rounded-lg bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
+    >
+      아이디 로그인
+    </Link>
+  ) : null);
 
   return (
     <main className="min-h-[100vh] bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.14),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.1),_transparent_20%),linear-gradient(180deg,_#edf4fb_0%,_#f7fbff_42%,_#edf2f8_100%)] px-4 py-8 sm:px-6 lg:px-8">
@@ -175,9 +187,9 @@ export default function AdminAccessState({
                     {note}
                   </div>
                 ) : null}
-                {actions ? (
+                {resolvedActions ? (
                   <div className="rounded-[22px] border border-white/10 bg-white/8 px-4 py-4">
-                    <div className="flex flex-wrap items-center gap-2">{actions}</div>
+                    <div className="flex flex-wrap items-center gap-2">{resolvedActions}</div>
                   </div>
                 ) : null}
               </div>

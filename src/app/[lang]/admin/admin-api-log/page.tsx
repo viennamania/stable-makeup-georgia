@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useActiveAccount } from "thirdweb/react";
+import {
+  useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useMemo,
+  useState } from "react";
 import { toast } from "react-hot-toast";
 
 type RangeKey = "today" | "yesterday" | "dayBeforeYesterday" | "all";
@@ -107,7 +111,7 @@ const formatCountry = (value: unknown) => {
 };
 
 export default function AdminApiLogPage() {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const walletAddress = activeAccount?.address || "";
 
   const [logs, setLogs] = useState<AdminApiCallLog[]>([]);

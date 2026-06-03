@@ -1,5 +1,7 @@
 'use client';
 
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
 import * as Ably from "ably";
 import React, { useState, useEffect, use, act, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
@@ -9,7 +11,8 @@ import AdminAccessState from "@/components/admin/admin-access-state";
 import ModalUser from '@/components/modal-user';
 import Modal from '@/components/modal';
 
-import { useRouter }from "next//navigation";
+import {
+  useRouter }from "next//navigation";
 
 
 import { toast } from 'react-hot-toast';
@@ -27,23 +30,17 @@ import {
   sendTransaction,
   waitForReceipt,
   sendBatchTransaction,
-
   readContract,
-} from "thirdweb";
+  } from "thirdweb";
 
 
 
 import {
   ConnectButton,
-  useActiveAccount,
   useActiveWallet,
   useWalletBalance,
-
   useSetActiveWallet,
-
   useConnectedWallets,
-
-
 } from "thirdweb/react";
 
 import {
@@ -842,7 +839,7 @@ export default function Index({ params }: any) {
   */
 
 
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
 
   const address = activeAccount?.address;
 

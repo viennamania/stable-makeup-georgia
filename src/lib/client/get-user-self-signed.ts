@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  ADMIN_PASSWORD_VIRTUAL_WALLET_ADDRESS,
+  isAdminPasswordSessionAccount,
+} from "@/lib/client/use-admin-active-account";
 import type { Account } from "thirdweb/wallets";
 
 const SELF_READ_SIGNING_PREFIX = "stable-georgia:get-user:self:v1";
@@ -43,6 +47,42 @@ export async function postGetUserSelfSigned({
   walletAddress?: string;
   signal?: AbortSignal;
 }) {
+  if (isAdminPasswordSessionAccount(account)) {
+    try {
+      const response = await fetch("/api/admin-auth/session", {
+        method: "GET",
+        credentials: "same-origin",
+        signal,
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.result?.authenticated) {
+        return {
+          result: null,
+          error: data?.error || "Admin password session not authenticated",
+        };
+      }
+
+      const session = data.result;
+      return {
+        result: {
+          loginId: session.account?.loginId,
+          nickname: session.account?.displayName || session.account?.loginId,
+          name: session.account?.displayName || session.account?.loginId,
+          storecode: session.requesterStorecode || storecode || "admin",
+          role: session.account?.role,
+          walletAddress: ADMIN_PASSWORD_VIRTUAL_WALLET_ADDRESS,
+          authType: "password_session",
+          allowedStorecodes: session.account?.storecodes || [],
+        },
+      };
+    } catch (error) {
+      return {
+        result: null,
+        error: error instanceof Error ? error.message : "Failed to read admin password session",
+      };
+    }
+  }
+
   if (!account) {
     return {
       result: null,

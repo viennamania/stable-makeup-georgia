@@ -1,10 +1,12 @@
 'use client';
 
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { ConnectButton, useActiveAccount } from 'thirdweb/react';
+import { ConnectButton } from "thirdweb/react";
 import { inAppWallet } from 'thirdweb/wallets';
 
 import { client } from '../../../../../client';
@@ -65,7 +67,7 @@ const shortenWallet = (value?: string | null) => {
 
 export default function StoreMemoPage({ params }: { params: { lang: string; storecode: string } }) {
   const router = useRouter();
-  const smartAccount = useActiveAccount();
+  const smartAccount = useAdminActiveAccount();
   const address = smartAccount?.address || '';
 
   const [store, setStore] = useState<any>(null);

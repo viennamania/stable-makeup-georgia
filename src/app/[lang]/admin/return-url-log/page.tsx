@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useMemo,
+  useState } from "react";
 import { toast } from "react-hot-toast";
-import { useActiveAccount } from "thirdweb/react";
 
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
@@ -141,7 +145,7 @@ const resolveStatusClassName = (status: unknown) => {
 };
 
 export default function ReturnUrlLogPage() {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const walletAddress = activeAccount?.address || "";
 
   const [logs, setLogs] = useState<ReturnUrlLog[]>([]);

@@ -1,9 +1,13 @@
 'use client';
 
+import {
+  useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
 import Image from "next/image";
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ReactNode } from "react";
 import { toast } from "react-hot-toast";
-import { useActiveAccount } from "thirdweb/react";
 
 import AdminAccessState from "@/components/admin/admin-access-state";
 import Uploader from "@/components/uploader-client";
@@ -334,7 +338,7 @@ const ExchangeRateHistoryPanel = ({
 };
 
 export default function SettingsPage({ params }: SettingsPageProps) {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const address = activeAccount?.address;
 
   const [user, setUser] = useState<any>(null);

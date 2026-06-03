@@ -8,6 +8,11 @@ import {
 import { insertAdminApiCallLog } from "@/lib/api/adminApiCallLog";
 import clientPromise, { dbName } from "@/lib/mongodb";
 import {
+  canAdminPasswordAccountUseAdminAction,
+  isAdminPasswordCookieSessionRequestAllowed,
+  readAdminPasswordSession,
+} from "@/lib/server/admin-password-auth";
+import {
   consumeReadRateLimit,
   getRequestCountry,
   getRequestIp,
@@ -307,6 +312,129 @@ export const verifyAdminSignedAction = async ({
       },
     });
   };
+
+  const passwordSession = await readAdminPasswordSession(request).catch(() => null);
+  if (passwordSession?.authenticated) {
+    const passwordSessionRate = consumeReadRateLimit({
+      scope: `admin-password-session:${route}`,
+      ip,
+      walletAddress: passwordSession.requesterWalletAddress,
+    });
+
+    if (!passwordSessionRate.allowed) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "password_session_rate_limited",
+        requesterUser: passwordSession.requesterUser,
+        walletAddress: passwordSession.requesterWalletAddress,
+      });
+
+      return {
+        ok: false,
+        status: 429,
+        error: "Too many requests",
+      };
+    }
+
+    if (!isAdminPasswordCookieSessionRequestAllowed(request, passwordSession.source)) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "password_session_invalid_origin",
+        requesterUser: passwordSession.requesterUser,
+        walletAddress: passwordSession.requesterWalletAddress,
+      });
+
+      return {
+        ok: false,
+        status: 403,
+        error: "Invalid session origin",
+      };
+    }
+
+    const passwordSessionAllowed = canAdminPasswordAccountUseAdminAction({
+      account: passwordSession.account,
+      allowedRoles: normalizedAllowedRoles,
+      requireAdminStorecode,
+    });
+
+    if (!passwordSessionAllowed) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "password_session_forbidden",
+        requesterUser: passwordSession.requesterUser,
+        walletAddress: passwordSession.requesterWalletAddress,
+        meta: {
+          requesterStorecode: passwordSession.requesterStorecode,
+          requesterRole: passwordSession.account.role,
+          allowedRoles: normalizedAllowedRoles,
+          requireAdminStorecode,
+        },
+      });
+      await logUserReadSecurityEvent({
+        route,
+        status: "blocked",
+        reason: "password_session_forbidden",
+        ip,
+        requesterWalletAddress: passwordSession.requesterWalletAddress,
+        signatureProvided: false,
+        signatureVerified: false,
+        rateLimited: false,
+        extra: {
+          requesterStorecode: passwordSession.requesterStorecode,
+          requesterRole: passwordSession.account.role,
+          allowedRoles: normalizedAllowedRoles,
+          requireAdminStorecode,
+        },
+      });
+
+      return {
+        ok: false,
+        status: 403,
+        error: "Forbidden",
+      };
+    }
+
+    await writeAdminApiCallLog({
+      status: "allowed",
+      reason: "admin_password_session",
+      requesterUser: passwordSession.requesterUser,
+      walletAddress: passwordSession.requesterWalletAddress,
+      meta: {
+        requesterStorecode: passwordSession.requesterStorecode,
+        requesterRole: passwordSession.account.role,
+        allowedRoles: normalizedAllowedRoles,
+        requireAdminStorecode,
+        sessionSource: passwordSession.source,
+      },
+    });
+    await logUserReadSecurityEvent({
+      route,
+      status: "allowed",
+      reason: "admin_password_session",
+      ip,
+      requesterWalletAddress: passwordSession.requesterWalletAddress,
+      signatureProvided: false,
+      signatureVerified: false,
+      rateLimited: false,
+      extra: {
+        requesterStorecode: passwordSession.requesterStorecode,
+        action: signingPrefix,
+        allowedRoles: normalizedAllowedRoles,
+        requireAdminStorecode,
+        sessionSource: passwordSession.source,
+      },
+    });
+
+    return {
+      ok: true,
+      requesterWalletAddress: passwordSession.requesterWalletAddress,
+      requesterStorecode: passwordSession.requesterStorecode,
+      requesterUser: passwordSession.requesterUser,
+      signedAtIso: "",
+      nonce: "",
+      ip,
+    };
+  }
 
   if (!requesterWalletAddress || !signature || !signedAtIso || !nonce) {
     await writeAdminApiCallLog({

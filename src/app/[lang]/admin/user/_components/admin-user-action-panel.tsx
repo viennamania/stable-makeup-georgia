@@ -1,7 +1,9 @@
 "use client";
 
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
 import Link from "next/link";
-import { useActiveAccount } from "thirdweb/react";
+
 
 type AdminUserActionPanelMode = "register" | "settings";
 
@@ -22,7 +24,7 @@ const formatWalletAddress = (value: string): string => {
 };
 
 export default function AdminUserActionPanel({ lang, mode }: AdminUserActionPanelProps) {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const walletAddress = String(activeAccount?.address || "").trim();
 
   const isRegisterMode = mode === "register";

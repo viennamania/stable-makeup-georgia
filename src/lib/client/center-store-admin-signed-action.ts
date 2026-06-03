@@ -1,6 +1,7 @@
 "use client";
 
 import { buildCenterStoreAdminSigningMessage } from "@/lib/security/center-store-admin-signing";
+import { isAdminPasswordSessionAccount } from "@/lib/client/use-admin-active-account";
 import type { Account } from "thirdweb/wallets";
 
 const normalizeString = (value: unknown): string => {
@@ -59,10 +60,6 @@ export const postCenterStoreAdminSignedJson = async ({
   signal?: AbortSignal;
 }) => {
   try {
-    if (!account) {
-      throw new Error("Wallet account not connected");
-    }
-
     const rawBody = body || {};
     const actionFields = sanitizeActionFields(rawBody);
     const hasStorecodeField = Object.prototype.hasOwnProperty.call(actionFields, "storecode");
@@ -72,6 +69,33 @@ export const postCenterStoreAdminSignedJson = async ({
       ?? (rawBody as Record<string, unknown>).requesterStorecode
       ?? normalizedBodyStorecode,
     );
+
+    if (!account || isAdminPasswordSessionAccount(account)) {
+      if (!normalizedStorecode) {
+        throw new Error("storecode is required");
+      }
+
+      const sessionBody: Record<string, unknown> = {
+        ...actionFields,
+      };
+
+      if (hasStorecodeField) {
+        sessionBody.storecode = normalizeString(actionFields.storecode);
+      } else {
+        sessionBody.storecode = normalizedStorecode;
+      }
+
+      return fetch(route, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        signal,
+        body: JSON.stringify(sessionBody),
+      });
+    }
+
     const normalizedWalletAddress =
       normalizeWalletAddress(
         requesterWalletAddress

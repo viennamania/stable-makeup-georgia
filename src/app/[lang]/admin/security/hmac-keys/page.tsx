@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useEffect,
+  useMemo,
+  useState } from "react";
 import { toast } from "react-hot-toast";
-import { useActiveAccount } from "thirdweb/react";
 
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
@@ -61,7 +65,7 @@ const formatDateTime = (value: unknown) => {
 };
 
 export default function HmacKeyManagementPage() {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
 
   const [keys, setKeys] = useState<HmacKeyItem[]>([]);
   const [drafts, setDrafts] = useState<Record<string, DraftState>>({});

@@ -1,6 +1,11 @@
 'use client';
 
-import { useState, useEffect, use } from "react";
+
+import { useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useState,
+  useEffect,
+  use } from "react";
 
 import Image from "next/image";
 import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
@@ -19,24 +24,14 @@ import { createThirdwebClient } from "thirdweb";
 import {
   //ThirdwebProvider,
   ConnectButton,
-
   useConnect,
-
   useReadContract,
-
   useActiveWallet,
-
-  useActiveAccount,
-
   useSetActiveWallet,
   useConnectedWallets,
-
   darkTheme,
-
   lightTheme,
-
   useConnectModal,
-  
 } from "thirdweb/react";
 
 import {
@@ -330,7 +325,7 @@ export default function Index({ params }: any) {
 
 
 
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
 
   const address = activeAccount?.address;
 
@@ -926,22 +921,12 @@ export default function Index({ params }: any) {
 
   if (!address) {
     return (
-      <div className="flex flex-col items-center justify-center">
-
-        <h1 className="text-2xl font-bold">로그인</h1>
-
-        <p className="text-lg">지갑을 연결하여 로그인 해주세요</p>
-
-        {/* banner-home.webp */}
-        <Image
-          src="/banner-home.webp"
-          alt="Banner"
-          width={1200}
-          height={400}
-          className="rounded-lg"
-        />
-
-      </div>
+      <AdminAccessState
+        variant="login"
+        title="관리자 로그인이 필요합니다"
+        description="지갑 연결 또는 아이디 로그인으로 관리자 권한을 확인할 수 있습니다."
+        note="전체 관리자와 가맹점 관리자 계정을 모두 지원합니다."
+      />
     );
   }
 

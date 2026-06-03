@@ -1,8 +1,12 @@
 "use client";
 
 import { useLayoutEffect } from "react";
-import { useActiveAccount } from "thirdweb/react";
+import type { Account } from "thirdweb/wallets";
 
+import {
+  isAdminPasswordSessionAccount,
+  useAdminActiveAccount,
+} from "@/lib/client/use-admin-active-account";
 import {
   buildCenterStoreAdminSigningMessage,
   extractCenterStoreAdminActionFields,
@@ -155,14 +159,9 @@ const wait = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-type SignableAccount = {
-  address?: string;
-  signMessage: (input: { message: string }) => Promise<string>;
-};
-
 type BridgeWindow = typeof window & {
   __centerStoreAdminFetchPatched?: boolean;
-  __centerStoreAdminActiveAccount?: SignableAccount | null;
+  __centerStoreAdminActiveAccount?: Account | null;
 };
 
 const signMessageWithRetry = async ({
@@ -194,7 +193,7 @@ const signMessageWithRetry = async ({
 };
 
 export default function CenterStoreAdminFetchSignatureBridge() {
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
 
   const installFetchPatch = () => {
     if (typeof window === "undefined") {
@@ -272,6 +271,44 @@ export default function CenterStoreAdminFetchSignatureBridge() {
 
       if (!requesterWalletAddress) {
         return originalFetch(input, init);
+      }
+
+      if (isAdminPasswordSessionAccount(account)) {
+        const session = account.adminPasswordSession;
+        const requesterStorecode =
+          normalizeString(payload.requesterStorecode)
+          || normalizeString(payload.storecode)
+          || normalizeString(session.requesterStorecode)
+          || "admin";
+        const passwordPayload: Record<string, unknown> = {
+          ...payload,
+          requesterWalletAddress,
+        };
+
+        if ((isCenterStoreAdminPath || isStoreSettingsMutationPath) && !normalizeString(passwordPayload.requesterStorecode)) {
+          passwordPayload.requesterStorecode = requesterStorecode;
+        }
+
+        if (isSelfReadPath || isSelfWalletActionPath) {
+          passwordPayload.storecode = normalizeString(passwordPayload.storecode) || requesterStorecode;
+          passwordPayload.walletAddress =
+            normalizeString(passwordPayload.walletAddress).toLowerCase() || requesterWalletAddress;
+        }
+
+        const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
+        if (!headers.has("Content-Type")) {
+          headers.set("Content-Type", "application/json");
+        }
+
+        const sessionInit: RequestInit = {
+          ...init,
+          method: "POST",
+          headers,
+          credentials: init?.credentials || "same-origin",
+          body: JSON.stringify(passwordPayload),
+        };
+
+        return originalFetch(input, sessionInit);
       }
 
       const signedAt = new Date().toISOString();

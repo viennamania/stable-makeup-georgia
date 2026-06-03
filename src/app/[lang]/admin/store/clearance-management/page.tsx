@@ -1,10 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useAdminActiveAccount } from "@/lib/client/use-admin-active-account";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useActiveAccount } from "thirdweb/react";
+import { useRouter,
+  useSearchParams } from "next/navigation";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 const ClearancePage = dynamic(
@@ -88,7 +95,7 @@ const menuButtonBase =
 export default function ClearanceManagementPage({ params }: any) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeAccount = useActiveAccount();
+  const activeAccount = useAdminActiveAccount();
   const address = activeAccount?.address;
   const isHistoryOnly = Boolean(params?.historyOnly);
 
