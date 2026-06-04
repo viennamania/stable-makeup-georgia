@@ -70,6 +70,10 @@ import { add } from "thirdweb/extensions/farcaster/keyGateway";
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+import {
+  postAdminPasswordAccountList,
+  postAdminPasswordStoreAdminUpsert,
+} from "@/lib/client/admin-password-account-admin";
 import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
 //import Chat from "@/components/Chat";
 import { ClassNames } from "@emotion/react";
@@ -137,6 +141,17 @@ interface BuyOrder {
   store: any;
 }
 
+type AdminPasswordAccount = {
+  loginId: string;
+  displayName: string | null;
+  role: string;
+  storecodes: string[];
+  status: string;
+  lastLoginAt: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 
 
 const wallets = [
@@ -185,6 +200,11 @@ const isValidStoreLimit = (value: number) =>
   STORE_LIMIT_OPTIONS.includes(
     value as (typeof STORE_LIMIT_OPTIONS)[number]
   );
+
+const normalizeText = (value: unknown) =>
+  typeof value === "string" ? value.trim() : "";
+
+const normalizeStorecode = (value: unknown) => normalizeText(value).toLowerCase();
 
 
 
@@ -1053,6 +1073,136 @@ export default function Index({ params }: any) {
   const [allStore, setAllStore] = useState([] as any[]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchCount, setSearchCount] = useState(0);
+  const [adminPasswordAccounts, setAdminPasswordAccounts] = useState<AdminPasswordAccount[]>([]);
+  const [fetchingAdminPasswordAccounts, setFetchingAdminPasswordAccounts] = useState(false);
+  const [storeAdminLoginStore, setStoreAdminLoginStore] = useState<any | null>(null);
+  const [storeAdminLoginId, setStoreAdminLoginId] = useState("");
+  const [storeAdminPassword, setStoreAdminPassword] = useState("");
+  const [storeAdminDisplayName, setStoreAdminDisplayName] = useState("");
+  const [savingStoreAdminLogin, setSavingStoreAdminLogin] = useState(false);
+
+  const storeAdminAccountsByStorecode = useMemo(() => {
+    const map: Record<string, AdminPasswordAccount[]> = {};
+    adminPasswordAccounts.forEach((account) => {
+      const role = normalizeText(account?.role).toLowerCase();
+      if (role !== "store_admin") {
+        return;
+      }
+
+      (account.storecodes || []).forEach((storecode) => {
+        const key = normalizeStorecode(storecode);
+        if (!key) {
+          return;
+        }
+        if (!map[key]) {
+          map[key] = [];
+        }
+        map[key].push(account);
+      });
+    });
+    return map;
+  }, [adminPasswordAccounts]);
+
+  const selectedStoreAdminAccounts = useMemo(() => {
+    const key = normalizeStorecode(storeAdminLoginStore?.storecode);
+    return key ? storeAdminAccountsByStorecode[key] || [] : [];
+  }, [storeAdminAccountsByStorecode, storeAdminLoginStore]);
+
+  const fetchAdminPasswordAccounts = async () => {
+    if (!activeAccount || fetchingAdminPasswordAccounts) {
+      return;
+    }
+
+    setFetchingAdminPasswordAccounts(true);
+    try {
+      const response = await postAdminPasswordAccountList(activeAccount);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "관리자 로그인 계정 조회에 실패했습니다.");
+      }
+      setAdminPasswordAccounts(data?.result?.accounts || []);
+    } catch (error: any) {
+      toast.error(error?.message || "관리자 로그인 계정 조회에 실패했습니다.");
+    } finally {
+      setFetchingAdminPasswordAccounts(false);
+    }
+  };
+
+  const openStoreAdminLoginModal = (storeItem: any) => {
+    const storecode = normalizeStorecode(storeItem?.storecode);
+    const existingAccount = storeAdminAccountsByStorecode[storecode]?.[0];
+    const storeName = normalizeText(storeItem?.storeName) || storecode;
+
+    setStoreAdminLoginStore(storeItem);
+    setStoreAdminLoginId(existingAccount?.loginId || storecode);
+    setStoreAdminDisplayName(existingAccount?.displayName || `${storeName} 관리자`);
+    setStoreAdminPassword("");
+  };
+
+  const closeStoreAdminLoginModal = () => {
+    if (savingStoreAdminLogin) {
+      return;
+    }
+    setStoreAdminLoginStore(null);
+    setStoreAdminLoginId("");
+    setStoreAdminPassword("");
+    setStoreAdminDisplayName("");
+  };
+
+  const saveStoreAdminLogin = async () => {
+    if (!activeAccount || !storeAdminLoginStore) {
+      toast.error("관리자 인증이 필요합니다.");
+      return;
+    }
+
+    const storecode = normalizeStorecode(storeAdminLoginStore?.storecode);
+    const loginId = normalizeText(storeAdminLoginId).toLowerCase();
+    const password = storeAdminPassword;
+    const displayName =
+      normalizeText(storeAdminDisplayName)
+      || `${normalizeText(storeAdminLoginStore?.storeName) || storecode} 관리자`;
+
+    if (!storecode) {
+      toast.error("가맹점 코드가 없습니다.");
+      return;
+    }
+    if (!loginId) {
+      toast.error("로그인 ID를 입력해주세요.");
+      return;
+    }
+    if (password.length < 8) {
+      toast.error("비밀번호는 8자 이상이어야 합니다.");
+      return;
+    }
+
+    setSavingStoreAdminLogin(true);
+    try {
+      const response = await postAdminPasswordStoreAdminUpsert({
+        account: activeAccount,
+        loginId,
+        password,
+        displayName,
+        storecodes: [storecode],
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "가맹점 관리자 계정 저장에 실패했습니다.");
+      }
+
+      toast.success(
+        data?.result?.created
+          ? "가맹점 관리자 계정이 생성되었습니다."
+          : "가맹점 관리자 비밀번호가 초기화되었습니다.",
+      );
+      setStoreAdminPassword("");
+      await fetchAdminPasswordAccounts();
+      setStoreAdminLoginStore(null);
+    } catch (error: any) {
+      toast.error(error?.message || "가맹점 관리자 계정 저장에 실패했습니다.");
+    } finally {
+      setSavingStoreAdminLogin(false);
+    }
+  };
 
   const totalPages = useMemo(() => {
     const safeLimit = Number(limitValue) > 0 ? Number(limitValue) : STORE_DEFAULT_LIMIT;
@@ -1205,6 +1355,15 @@ export default function Index({ params }: any) {
     fetchAllStore();
 
   } , [address, limitValue, pageValue, agentcode, paramAgentcode]);
+
+  useEffect(() => {
+    if (!activeAccount || !isAdmin) {
+      setAdminPasswordAccounts([]);
+      return;
+    }
+    fetchAdminPasswordAccounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  } , [activeAccount, isAdmin]);
   
 
 
@@ -2912,6 +3071,28 @@ export default function Index({ params }: any) {
                                 >
                                   설정하기
                                 </button>
+
+                                {(() => {
+                                  const storecodeKey = normalizeStorecode(item?.storecode);
+                                  const storeAdminAccount = storeAdminAccountsByStorecode[storecodeKey]?.[0];
+                                  return (
+                                    <div className="flex w-full flex-col gap-1">
+                                      <button
+                                        disabled={!isAdmin || savingStoreAdminLogin}
+                                        onClick={() => openStoreAdminLoginModal(item)}
+                                        className={`
+                                          ${!isAdmin || savingStoreAdminLogin ? 'opacity-50 cursor-not-allowed' : ''}
+                                          w-full rounded-lg bg-slate-950 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-800
+                                        `}
+                                      >
+                                        ID/PW 설정
+                                      </button>
+                                      <span className="w-full truncate rounded-md bg-slate-100 px-2 py-1 text-center text-[11px] font-semibold text-slate-600">
+                                        {storeAdminAccount?.loginId || '미발급'}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
 
 
@@ -3896,6 +4077,117 @@ export default function Index({ params }: any) {
                 closeModal={closeModal}
                 //goChat={goChat}
             />
+        </Modal>
+
+        <Modal
+          isOpen={Boolean(storeAdminLoginStore)}
+          onClose={closeStoreAdminLoginModal}
+          panelClassName="max-w-md p-5"
+        >
+          <form
+            className="flex w-full flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              saveStoreAdminLogin();
+            }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-lg font-bold text-slate-950">가맹점 관리자 로그인</div>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">
+                    {storeAdminLoginStore?.storeName || '-'}
+                  </span>
+                  <span>/</span>
+                  <span className="font-mono">
+                    {storeAdminLoginStore?.storecode || '-'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={savingStoreAdminLogin}
+                onClick={closeStoreAdminLoginModal}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                닫기
+              </button>
+            </div>
+
+            {selectedStoreAdminAccounts.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-2 text-xs font-bold text-slate-700">현재 발급 계정</div>
+                <div className="flex flex-col gap-1.5">
+                  {selectedStoreAdminAccounts.map((account) => (
+                    <div
+                      key={account.loginId}
+                      className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs"
+                    >
+                      <span className="truncate font-mono font-semibold text-slate-950">
+                        {account.loginId}
+                      </span>
+                      <span className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+                        {account.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-3">
+              <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+                로그인 ID
+                <input
+                  value={storeAdminLoginId}
+                  onChange={(event) => setStoreAdminLoginId(event.target.value)}
+                  autoComplete="username"
+                  className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-950 outline-none focus:border-blue-400"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+                표시 이름
+                <input
+                  value={storeAdminDisplayName}
+                  onChange={(event) => setStoreAdminDisplayName(event.target.value)}
+                  className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-950 outline-none focus:border-blue-400"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+                새 비밀번호
+                <input
+                  value={storeAdminPassword}
+                  onChange={(event) => setStoreAdminPassword(event.target.value)}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="8자 이상"
+                  className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-950 outline-none focus:border-blue-400"
+                />
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                disabled={savingStoreAdminLogin}
+                onClick={closeStoreAdminLoginModal}
+                className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={savingStoreAdminLogin || !isAdmin}
+                className={`rounded-xl bg-slate-950 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 ${
+                  savingStoreAdminLogin || !isAdmin ? 'cursor-not-allowed opacity-60' : ''
+                }`}
+              >
+                {savingStoreAdminLogin ? '저장 중...' : '저장 / 비밀번호 초기화'}
+              </button>
+            </div>
+          </form>
         </Modal>
 
         <Modal
