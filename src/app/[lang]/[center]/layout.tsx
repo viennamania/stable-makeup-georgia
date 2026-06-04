@@ -32,7 +32,9 @@ import { useRouter }from "next//navigation";
 //import CenterConsole from '@/components/CenterConsole';
 
 import WalletConsole from '@/components/WalletConsole';
+import AdminPasswordSessionStatus from "@/components/admin/admin-password-session-status";
 import CenterStoreAdminFetchSignatureBridge from "@/components/CenterStoreAdminFetchSignatureBridge";
+import { AdminPasswordSessionProvider } from "@/lib/client/use-admin-active-account";
 
 
 import {
@@ -162,11 +164,13 @@ export default function RootLayout({
 
   return (
 
+        <AdminPasswordSessionProvider>
         <div className="w-full flex flex-col items-center justify-center p-0 bg-gray-100 rounded-lg shadow-md mb-4
           pt-12 
         ">
 
           <CenterStoreAdminFetchSignatureBridge />
+          <AdminPasswordSessionStatus />
 
           {/* fixed position left and vertically top */}
           <div className="
@@ -239,10 +243,11 @@ export default function RootLayout({
             </div>
           </div>
 
-            
+
           {children}
 
         </div>
+        </AdminPasswordSessionProvider>
 
   );
 

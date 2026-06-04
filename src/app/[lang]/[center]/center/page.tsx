@@ -4,6 +4,11 @@ import { useState, useEffect, use, act } from "react";
 
 import Image from "next/image";
 import AdminAccessState from "@/components/admin/admin-access-state";
+import {
+  isAdminPasswordSessionAccount,
+  useAdminActiveAccount,
+  useAdminPasswordSessionState,
+} from "@/lib/client/use-admin-active-account";
 
 
 
@@ -33,7 +38,6 @@ import {
 
 import {
   ConnectButton,
-  useActiveAccount,
   useActiveWallet,
   useWalletBalance,
 
@@ -67,6 +71,7 @@ import { add } from "thirdweb/extensions/farcaster/keyGateway";
 
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
+import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
 
 
 
@@ -105,6 +110,13 @@ import {
 } from "@/app/config/contractAddresses";
 
 const normalizeWalletAddress = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim().toLowerCase();
+};
+
+const normalizeStorecode = (value: unknown) => {
   if (typeof value !== "string") {
     return "";
   }
@@ -539,10 +551,25 @@ export default function Index({ params }: any) {
   */
 
 
-  const activeAccount = useActiveAccount();
-
+  const activeAccount = useAdminActiveAccount();
+  const passwordSession = useAdminPasswordSessionState();
+  const isPasswordSessionAccount = isAdminPasswordSessionAccount(activeAccount);
   const address = activeAccount?.address;
   const normalizedAddress = normalizeWalletAddress(address);
+  const normalizedCenterStorecode = normalizeStorecode(params.center);
+  const passwordSessionRole = normalizeStorecode(passwordSession.account?.role);
+  const passwordSessionStorecodes = Array.isArray(passwordSession.account?.storecodes)
+    ? passwordSession.account.storecodes.map((item) => normalizeStorecode(item)).filter(Boolean)
+    : [];
+  const hasPasswordStoreAdminAccess = Boolean(
+    passwordSession.authenticated
+    && (
+      passwordSessionRole === "admin"
+      || passwordSessionRole === "superadmin"
+      || passwordSessionStorecodes.includes("*")
+      || passwordSessionStorecodes.includes(normalizedCenterStorecode)
+    ),
+  );
 
 
 
@@ -551,7 +578,7 @@ export default function Index({ params }: any) {
   
   useEffect(() => {
 
-    if (address) {
+    if (address && !isPasswordSessionAccount) {
 
   
 
@@ -565,7 +592,7 @@ export default function Index({ params }: any) {
 
     }
 
-  } , [address]);
+  } , [address, isPasswordSessionAccount]);
   
 
 
@@ -709,7 +736,7 @@ export default function Index({ params }: any) {
 
   useEffect(() => {
 
-    if (address) {
+    if (address && !isPasswordSessionAccount) {
 
       getUserEmail({ client }).then((email) => {
         console.log('email', email);
@@ -774,7 +801,7 @@ export default function Index({ params }: any) {
 
     }
 
-  } , [address, params.center]);
+  } , [address, isPasswordSessionAccount, params.center]);
 
 
 
@@ -792,17 +819,11 @@ export default function Index({ params }: any) {
 
     setLoadingUser(true);
 
-    fetch('/api/user/getUser', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            storecode: params.center,
-            walletAddress: address,
-        }),
+    postGetUserSelfSigned({
+        account: activeAccount,
+        storecode: params.center,
+        walletAddress: address,
     })
-    .then(response => response.json())
     .then(data => {
         
         /////console.log('data.result', data.result);
@@ -812,7 +833,7 @@ export default function Index({ params }: any) {
 
         setEscrowWalletAddress(data.result.escrowWalletAddress);
 
-        setIsAdmin(data.result?.role === "admin");
+        setIsAdmin(data.result?.role === "admin" || hasPasswordStoreAdminAccess);
 
 
     })
@@ -826,7 +847,7 @@ export default function Index({ params }: any) {
     setLoadingUser(false);
 
 
-  } , [address, params.center]);
+  } , [activeAccount, address, hasPasswordStoreAdminAccess, params.center]);
 
 
 
@@ -1118,8 +1139,11 @@ export default function Index({ params }: any) {
             const normalizedStoreAdminWalletAddress = normalizeWalletAddress(data.result?.adminWalletAddress);
             setStoreAdminWalletAddress(normalizedStoreAdminWalletAddress);
             setIsAdmin(Boolean(
-              normalizedStoreAdminWalletAddress
-              && normalizedStoreAdminWalletAddress === normalizedAddress,
+              hasPasswordStoreAdminAccess
+              || (
+                normalizedStoreAdminWalletAddress
+                && normalizedStoreAdminWalletAddress === normalizedAddress
+              ),
             ));
   
 
@@ -1157,7 +1181,7 @@ export default function Index({ params }: any) {
       , 5000);
       return () => clearInterval(interval);
   
-    } , [params.center, address, normalizedAddress]);
+    } , [params.center, address, normalizedAddress, hasPasswordStoreAdminAccess]);
 
 
 
@@ -1296,7 +1320,7 @@ export default function Index({ params }: any) {
       fetchAllUsers();
     } , 5000);
     return () => clearInterval(interval);
-  } , [address]);
+  } , [address, isPasswordSessionAccount]);
    */
 
   /*
@@ -1636,13 +1660,49 @@ export default function Index({ params }: any) {
     store?.adminWalletAddress || storeAdminWalletAddress,
   );
   const hasStoreAdminAccess = Boolean(
-    normalizedAddress
-    && normalizedStoreAdminWalletAddress
-    && normalizedAddress === normalizedStoreAdminWalletAddress,
+    hasPasswordStoreAdminAccess
+    || (
+      normalizedAddress
+      && normalizedStoreAdminWalletAddress
+      && normalizedAddress === normalizedStoreAdminWalletAddress
+    ),
   );
 
 
 
+
+  if (!address && passwordSession.loading) {
+    return (
+      <AdminAccessState
+        variant="checking"
+        title={`${store?.storeName || params.center} 센터 권한 확인 중`}
+        description="관리자 아이디 세션과 지갑 연결 상태를 확인하고 있습니다."
+        note="권한 확인이 끝나면 접근 가능한 센터 화면이 열립니다."
+        policyTitle="center admin gate"
+        policyDescription="store admin password session / store admin wallet"
+        secureTitle="센터 운영 보호 구역"
+        secureDescription="센터 핵심 운영 대시보드는 인증된 센터 관리자 계정에서만 열립니다."
+        surfaceDescription={`${store?.storeName || params.center} 센터 메인 대시보드입니다.`}
+      />
+    );
+  }
+
+  if (isPasswordSessionAccount && passwordSession.authenticated && !hasPasswordStoreAdminAccess) {
+    return (
+      <AdminAccessState
+        variant="denied"
+        title={`${store?.storeName || params.center} 센터 권한이 없습니다`}
+        description="현재 로그인한 관리자 아이디에는 이 가맹점 센터 접근 권한이 없습니다."
+        address={passwordSession.requesterWalletAddress}
+        note={`허용 storecode: ${passwordSession.account?.storecodes?.join(", ") || "-"}`}
+        policyTitle="store_admin storecode gate"
+        policyDescription="로그인 계정의 허용 storecode가 현재 센터와 일치해야 합니다."
+        secureTitle="센터 운영 보호 구역"
+        secureDescription="가맹점 관리자 계정은 발급된 가맹점 범위 안에서만 센터 화면을 열 수 있습니다."
+        surfaceDescription={`${store?.storeName || params.center} 센터 메인 대시보드입니다.`}
+      />
+    );
+  }
 
   if (!address) {
     return (
