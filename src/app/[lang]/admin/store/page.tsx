@@ -186,6 +186,16 @@ const isValidStoreLimit = (value: number) =>
     value as (typeof STORE_LIMIT_OPTIONS)[number]
   );
 
+const formatStoreBankInfoLabel = (bankInfo: any) => {
+  if (!bankInfo || typeof bankInfo !== "object") {
+    return "";
+  }
+
+  return [bankInfo.accountHolder, bankInfo.bankName]
+    .filter((value) => typeof value === "string" && value.trim())
+    .join(" ");
+};
+
 
 
 
@@ -3076,17 +3086,7 @@ export default function Index({ params }: any) {
                                         <span className="text-xs text-white">일반</span>
                                       </div>
                                       <span className="text-sm text-zinc-500">
-                                          {item?.bankInfo?.accountNumber.length > 5 ? (
-                                            <>
-                                              {item?.bankInfo?.accountHolder
-                                              + " " + item?.bankInfo?.bankName}
-                                            </>
-                                          ) : (
-                                            <>
-                                              {item?.bankInfo?.accountHolder
-                                              + " " + item?.bankInfo?.bankName}
-                                            </>
-                                          )}
+                                          {formatStoreBankInfoLabel(item?.bankInfo)}
                                       </span>
                                     </div>
                                     )}
@@ -3097,17 +3097,7 @@ export default function Index({ params }: any) {
                                         <span className="text-xs text-white">1등급</span>
                                       </div>
                                       <span className="text-sm text-zinc-500">
-                                          {item?.bankInfoAAA?.accountNumber.length > 5 ? (
-                                            <>
-                                              {item?.bankInfoAAA?.accountHolder
-                                              + " " + item?.bankInfoAAA?.bankName}
-                                            </>
-                                          ) : (
-                                            <>
-                                              {item?.bankInfoAAA?.accountHolder
-                                              + " " + item?.bankInfoAAA?.bankName}
-                                            </>
-                                          )}
+                                          {formatStoreBankInfoLabel(item?.bankInfoAAA)}
                                       </span>
                                     </div>
                                     )}
@@ -3118,17 +3108,7 @@ export default function Index({ params }: any) {
                                         <span className="text-xs text-white">2등급</span>
                                       </div>
                                       <span className="text-sm text-zinc-500">
-                                          {item?.bankInfoBBB?.accountNumber.length > 5 ? (
-                                            <>
-                                              {item?.bankInfoBBB?.accountHolder
-                                              + " " + item?.bankInfoBBB?.bankName}
-                                            </>
-                                          ) : (
-                                            <>
-                                              {item?.bankInfoBBB?.accountHolder
-                                              + " " + item?.bankInfoBBB?.bankName}
-                                            </>
-                                          )}
+                                          {formatStoreBankInfoLabel(item?.bankInfoBBB)}
                                       </span>
                                     </div>
                                     )}
@@ -3139,17 +3119,7 @@ export default function Index({ params }: any) {
                                         <span className="text-xs text-white">3등급</span>
                                       </div>
                                       <span className="text-sm text-zinc-500">
-                                          {item?.bankInfoCCC?.accountNumber.length > 5 ? (
-                                            <>
-                                              {item?.bankInfoCCC?.accountHolder
-                                              + " " + item?.bankInfoCCC?.bankName}
-                                            </>
-                                          ) : (
-                                            <>
-                                              {item?.bankInfoCCC?.accountHolder
-                                              + " " + item?.bankInfoCCC?.bankName}
-                                            </>
-                                          )}
+                                          {formatStoreBankInfoLabel(item?.bankInfoCCC)}
                                       </span>
                                     </div>
                                     )}
@@ -3160,17 +3130,7 @@ export default function Index({ params }: any) {
                                         <span className="text-xs text-white">4등급</span>
                                       </div>
                                       <span className="text-sm text-zinc-500">
-                                          {item?.bankInfoDDD?.accountNumber.length > 5 ? (
-                                            <>
-                                              {item?.bankInfoDDD?.accountHolder
-                                              + " " + item?.bankInfoDDD?.bankName}
-                                            </>
-                                          ) : (
-                                            <>
-                                              {item?.bankInfoDDD?.accountHolder
-                                              + " " + item?.bankInfoDDD?.bankName}
-                                            </>
-                                          )}
+                                          {formatStoreBankInfoLabel(item?.bankInfoDDD)}
                                       </span>
                                     </div>
                                     )}
