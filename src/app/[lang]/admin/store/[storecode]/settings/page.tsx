@@ -633,6 +633,71 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // set storeBankInfo
+    const [bankName, setBankName] = useState("");
+    const [accountNumber, setAccountNumber] = useState("");
+    const [accountHolder, setAccountHolder] = useState("");
+    const [writingStoreBankInfo, setWritingStoreBankInfo] = useState(false);
+
+    const writeStoreBankInfo = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        if (bankName.length < 2 || bankName.length > 20) {
+            toast.error("은행 이름을 2자 이상 20자 이하로 설정하세요");
+            return;
+        }
+        if (accountNumber.length < 2 || accountNumber.length > 20) {
+            toast.error("계좌 번호를 2자 이상 20자 이하로 설정하세요");
+            return;
+        }
+        if (accountHolder.length < 2 || accountHolder.length > 20) {
+            toast.error("예금주 이름을 2자 이상 20자 이하로 설정하세요");
+            return;
+        }
+
+        setWritingStoreBankInfo(true);
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreBankInfo',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
+                lang: params.lang,
+                storecode: params.storecode,
+                walletAddress: address,
+                bankName: bankName,
+                accountNumber: accountNumber,
+                accountHolder: accountHolder,
+            },
+        });
+        const data = await response.json();
+
+        if (data.result) {
+            toast.success('가맹점 결제용 은행 정보가 설정되었습니다');
+            setBankName('');
+            setAccountNumber('');
+            setAccountHolder('');
+
+            setStore({
+                ...store,
+                bankInfo: {
+                    bankName: bankName,
+                    accountNumber: accountNumber,
+                    accountHolder: accountHolder,
+                },
+            });
+        } else {
+            toast.error('가맹점 결제용 은행 정보 설정에 실패하였습니다');
+        }
+        setWritingStoreBankInfo(false);
+    }
+
+
+
+
+
     // setWithdrawalBankName
     // setWithdrawalAccountNumber
     // setWithdrawalAccountHolder
@@ -2754,6 +2819,131 @@ export default function SettingsPage({ params }: any) {
 
                         </div>
 
+
+
+
+
+
+                        {/* 가맹점 결제용 원화통장 설정 */}
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
+                            <div className='w-full flex flex-col items-center justify-between gap-2
+                                border-b border-gray-300 pb-2'>
+
+                                <div className="w-full flex flex-row items-center justify-start gap-2
+                                    border-b border-gray-300 pb-2">
+                                    <Image
+                                        src="/icon-bank.png"
+                                        alt="Bank"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-zinc-500">
+                                        가맹점 결제용(P2P 구매자 계좌이체용) 원화통장 설정
+                                    </span>
+                                </div>
+
+                                <div className='w-full flex flex-col items-start gap-2'>
+
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg">
+                                            은행이름:{' '}{store && store?.bankInfo && store.bankInfo.bankName}
+                                        </span>
+                                    </div>
+
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg">
+                                            계좌번호:{' '}{store && store?.bankInfo && store.bankInfo.accountNumber}
+                                        </span>
+                                    </div>
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg">
+                                            예금주:{' '}{store && store?.bankInfo && store.bankInfo.accountHolder}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className='w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-64 flex flex-col gap-2 items-center justify-between'>
+
+                                    <select
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        value={bankName}
+                                        onChange={(e) => setBankName(e.target.value)}
+                                    >
+                                        <option value="">은행이름 선택</option>
+                                        <option value="카카오뱅크">카카오뱅크</option>
+                                        <option value="케이뱅크">케이뱅크</option>
+                                        <option value="토스뱅크">토스뱅크</option>
+                                        <option value="국민은행">국민은행</option>
+                                        <option value="우리은행">우리은행</option>
+                                        <option value="신한은행">신한은행</option>
+                                        <option value="농협">농협</option>
+                                        <option value="기업은행">기업은행</option>
+                                        <option value="하나은행">하나은행</option>
+                                        <option value="외환은행">외환은행</option>
+                                        <option value="SC제일은행">SC제일은행</option>
+                                        <option value="부산은행">부산은행</option>
+                                        <option value="대구은행">대구은행</option>
+                                        <option value="전북은행">전북은행</option>
+                                        <option value="경북은행">경북은행</option>
+                                        <option value="경남은행">경남은행</option>
+                                        <option value="광주은행">광주은행</option>
+                                        <option value="제주은행">제주은행</option>
+                                        <option value="새마을금고">새마을금고</option>
+                                        <option value="수협">수협</option>
+                                        <option value="신협">신협</option>
+                                        <option value="씨티은행">씨티은행</option>
+                                        <option value="대신은행">대신은행</option>
+                                        <option value="동양종합금융">동양종합금융</option>
+                                        <option value="JT친애저축은행">JT친애저축은행</option>
+                                        <option value="저축은행">저축은행</option>
+                                        <option value="산업은행">산업은행</option>
+                                        <option value="우체국">우체국</option>
+                                    </select>
+                                    <input
+                                        type="text"
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        placeholder="계좌번호"
+                                        value={accountNumber}
+                                        onChange={(e) => setAccountNumber(e.target.value)}
+                                    />
+                                    <input
+                                        type="text"
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        placeholder="예금주"
+                                        value={accountHolder}
+                                        onChange={(e) => setAccountHolder(e.target.value)}
+                                    />
+                                    <button
+                                        disabled={!address || !bankName || !accountNumber || !accountHolder
+                                            || writingStoreBankInfo}
+                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!bankName || !accountNumber || !accountHolder || writingStoreBankInfo
+                                            ? "opacity-50" : ""}`}
+                                        onClick={() => {
+                                            if (!bankName || !accountNumber || !accountHolder) {
+                                                toast.error("은행명, 계좌번호, 예금주를 입력하세요");
+                                                return;
+                                            }
+
+                                            confirm(
+                                                `정말 ${bankName} ${accountNumber} ${accountHolder}로 가맹점 결제용 원화통장을 변경하시겠습니까?`
+                                            ) && writeStoreBankInfo();
+                                        }}
+                                    >
+                                        {writingStoreBankInfo ? '변경 중...' : '변경하기'}
+                                    </button>
+
+                                </div>
+
+                            </div>
+                        </div>
 
 
 
